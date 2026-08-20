@@ -43,6 +43,12 @@
 
 ---
 
+## 🚚 Requirements
+
+Node.js, NPM
+
+---
+
 ## 📦 Quick Installation
 
 You can download the source code directly from **GitHub Releases** and set it up globally in seconds:
