@@ -39,7 +39,7 @@
 
 * **[Commander](https://www.npmjs.com/package/commander)** - CLI flag parsing
 * **[Inquirer](https://www.npmjs.com/package/@inquirer/prompts)** - Interactive command-line prompts
-* **Node.js Native Modules** (`fs/promises`, `path`)
+* **Node.js Native Modules** (`fs`, `path`)
 
 ---
 
