@@ -54,7 +54,7 @@ Node.js, NPM
 You can download the source code directly from **GitHub Releases** and set it up globally in seconds:
 
 1. **Download & Extract:**
-   * Go to [Releases](../../releases) and download the `Source code (zip)`.
+   * Go to [Releases](../../releases) and download the `Latest version (.zip)`.
    * Extract it anywhere on your machine and open your terminal inside that folder.
 
 2. **Install & Link Globally:**
