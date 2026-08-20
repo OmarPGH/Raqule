@@ -1,0 +1,27 @@
+{
+  "name": "Raqule",
+  "version": "0.0.1-beta.1",
+  "description": "A code gatherer, specially designed for LLMs/AI like (ChatGPT, Claude, Gemini) to provide for them whole project context/codes in a single file.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "rql": "./bin/cli.js"
+  },
+  "keywords": [
+    "code",
+    "gatherer",
+    "collector",
+    "ai",
+    "llm",
+    "context"
+  ],
+  "author": "Omar Gamal",
+  "license": "Apache-2.0",
+  "type": "module",
+  "dependencies": {
+    "@inquirer/prompts": "^8.5.2",
+    "commander": "^15.0.0"
+  }
+}
