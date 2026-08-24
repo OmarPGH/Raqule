@@ -8,6 +8,7 @@ async function readFlags() {
 		.version(packageInfo.version)
 		.option('-a, --all', 'Collect all files & directory include like [.git, node_modules]')
 		.option('-d, --depth <number>', 'Select max depth')
+		.option('-t, --tree', 'Generate and save only the project directory tree without bundling file contents')
 
 	program.parse(process.argv);
 

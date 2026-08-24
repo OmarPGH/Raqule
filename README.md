@@ -83,6 +83,7 @@ rql
 | :---: | :---: |
 | `-d, --depth <number>` | Set maximum folder traversal depth |
 | `-a, --all` | Include hidden files and ignored folders (e.g., node_modules, .git) |
+| `-t, --tree` | Generate project tree structure only (without file contents) |
 | `-V, --version` | Output the current version |
 | `-h, --help` | Display help information |
 
@@ -94,12 +95,15 @@ rql -d 2
 
 # Include all ignored files/folders
 rql -a
+
+# Generate project tree structure only
+rql -t
 ```
 
 ---
 
 ## 📂 Project Structure
-made with Raqule.
+Made by Raqule.
 
 ```
 Raqule
