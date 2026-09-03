@@ -3,7 +3,7 @@ import { packageInfo } from './packageInfo.js';
 
 async function readFlags() {
 	program
-		.name('Raqule')
+		.name(packageInfo.name)
 		.description(packageInfo.description)
 		.version(packageInfo.version)
 		.option('-a, --all', 'Collect all files & directory include like [.git, node_modules]')
