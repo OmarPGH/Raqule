@@ -8,7 +8,14 @@ import { readFlags } from './flags.js';
 async function main() {
 	const flags = await readFlags();
 	const dirPath = await askAboutDirPath();
-	const outputPath = await askAboutOutputPath();
+	let outputPath;
+	
+	if (flags.printOnly) {
+		outputPath = './';
+	} else {
+		outputPath = await askAboutOutputPath();
+	}
+
 	const contextFile = path.resolve(outputPath, 'context.md');
 	await fs.promises.writeFile(contextFile, '');
 
@@ -24,7 +31,22 @@ async function main() {
 
 	await gather(dirPath, outputPath, contextFile, flags);	
 	
-	console.log(`You'll find context.md file at [ ${outputPath} ]`)
+	async function print() {
+		if (flags.print) {
+			console.log('\n\n The result:')
+			console.log(`\n\n${await fs.promises.readFile(contextFile, 'utf8')}`);
+		} 	
+	}
+
+	if (!flags.printOnly) {
+		console.log(`You'll find context.md file at [ ${path.join(outputPath, 'context.md')} | ${contextFile} ]`)
+		await print();
+	} else {
+		flags.print = true;
+		await print();
+		await fs.promises.unlink(contextFile);
+	}
+	
 }
 
 export { main };

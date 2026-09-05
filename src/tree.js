@@ -14,6 +14,10 @@ async function generateTree(dirPath, contextFile, flags) {
 
         for (let i = 0; i < items.length; i++) {
             const item = items[i];
+            const absoluteItemPath = path.resolve(item.parentPath, item.name);
+
+            if (absoluteItemPath === contextFile) continue;
+            
             const isLast = i === items.length - 1;
     		const pointer = isLast ? '└── ' : '├── ';
 
