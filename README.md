@@ -5,7 +5,6 @@
 ![Version](https://img.shields.io/badge/version-0.0.1--beta.1-blue)
 ![License](https://img.shields.io/badge/license-Apache--2.0-green)
 ![Language](https://img.shields.io/badge/language-JavaScript%20ES%20Module-yellow)
-![Status](https://img.shields.io/badge/status-Work%20In%20Progress-orange)
 
 ---
 
