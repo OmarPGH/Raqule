@@ -1,0 +1,268 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "*"
+
+env:
+  NODE_VERSION: "26.x"
+  ESBUILD_VERSION: "0.28.2"
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 5
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-x64
+            runner: ubuntu-24.04
+            os: linux
+            arch: x64
+
+          - target: linux-arm64
+            runner: ubuntu-24.04-arm
+            os: linux
+            arch: arm64
+
+          - target: macos-arm64
+            runner: macos-14
+            os: macos
+            arch: arm64
+
+          - target: win-x64
+            runner: windows-latest
+            os: win
+            arch: x64
+
+          - target: win-arm64
+            runner: windows-11-arm
+            os: win
+            arch: arm64
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          architecture: ${{ matrix.arch }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare build directories
+        shell: bash
+        run: |
+          rm -rf build dist
+          mkdir -p build dist
+
+      - name: Bundle Raqule
+        shell: bash
+        run: |
+          npx --yes "esbuild@${ESBUILD_VERSION}" \
+            bin/cli.js \
+            --bundle \
+            --platform=node \
+            --format=cjs \
+            --target=node26 \
+            --outfile=build/raqule.cjs
+
+      - name: Create binary name
+        id: binary
+        shell: bash
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          BINARY_NAME="Raqule-${VERSION}-${{ matrix.os }}-${{ matrix.arch }}"
+
+          if [ "${{ matrix.os }}" = "win" ]; then
+            BINARY_NAME="${BINARY_NAME}.exe"
+          fi
+
+          echo "name=${BINARY_NAME}" >> "$GITHUB_OUTPUT"
+          echo "Building: ${BINARY_NAME}"
+
+      - name: Create SEA configuration
+        shell: bash
+        env:
+          BINARY_NAME: ${{ steps.binary.outputs.name }}
+        run: |
+          node -e '
+            const fs = require("node:fs");
+            const path = require("node:path");
+
+            const config = {
+              main: path.resolve("build/raqule.cjs"),
+              mainFormat: "commonjs",
+              output: path.resolve("dist", process.env.BINARY_NAME),
+              useSnapshot: false,
+              useCodeCache: false,
+              disableExperimentalSEAWarning: true
+            };
+
+            fs.writeFileSync(
+              "sea-config.json",
+              JSON.stringify(config, null, 2)
+            );
+          '
+
+      - name: Build standalone executable
+        run: node --build-sea sea-config.json
+
+      - name: Make Unix binary executable
+        if: runner.os != 'Windows'
+        shell: bash
+        env:
+          BINARY_NAME: ${{ steps.binary.outputs.name }}
+        run: |
+          chmod +x "dist/${BINARY_NAME}"
+
+      - name: Smoke test executable
+        shell: bash
+        env:
+          BINARY_NAME: ${{ steps.binary.outputs.name }}
+        run: |
+          echo "Testing ${BINARY_NAME}"
+          "./dist/${BINARY_NAME}" --version
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: dist/${{ steps.binary.outputs.name }}
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: "*"
+          path: release-assets
+          merge-multiple: true
+
+      - name: List release assets
+        shell: bash
+        run: |
+          echo "Release assets:"
+          find release-assets -maxdepth 1 -type f -print
+
+      - name: Detect pre-release tag
+        id: prerelease
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+
+          if [[ "$TAG" =~ -(alpha|beta|rc)([.-]|$) ]]; then
+            echo "value=true" >> "$GITHUB_OUTPUT"
+            echo "Pre-release detected: ${TAG}"
+          else
+            echo "value=false" >> "$GITHUB_OUTPUT"
+            echo "Stable release detected: ${TAG}"
+          fi
+
+      - name: Generate SHA-256 checksums
+        working-directory: release-assets
+        shell: bash
+        run: |
+          sha256sum Raqule-* > SHA256SUMS
+
+      - name: Generate release notes
+        env:
+          VERSION: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          cat > RELEASE_NOTES.md <<EOF
+          # Raqule ${VERSION}
+
+          Standalone executables for Linux, macOS, and Windows.
+
+          ## Linux
+
+          ### Linux x64
+
+          \`\`\`bash
+          chmod +x Raqule-${VERSION}-linux-x64
+          ./Raqule-${VERSION}-linux-x64
+          \`\`\`
+
+          ### Linux ARM64
+
+          \`\`\`bash
+          chmod +x Raqule-${VERSION}-linux-arm64
+          ./Raqule-${VERSION}-linux-arm64
+          \`\`\`
+
+          ## macOS
+
+          ### Apple Silicon ARM64
+
+          \`\`\`bash
+          chmod +x Raqule-${VERSION}-macos-arm64
+          ./Raqule-${VERSION}-macos-arm64
+          \`\`\`
+
+          ## Windows
+
+          ### Windows x64
+
+          PowerShell:
+
+          \`\`\`powershell
+          .\\Raqule-${VERSION}-win-x64.exe
+          \`\`\`
+
+          Command Prompt:
+
+          \`\`\`cmd
+          Raqule-${VERSION}-win-x64.exe
+          \`\`\`
+
+          ### Windows ARM64
+
+          PowerShell:
+
+          \`\`\`powershell
+          .\\Raqule-${VERSION}-win-arm64.exe
+          \`\`\`
+
+          Command Prompt:
+
+          \`\`\`cmd
+          Raqule-${VERSION}-win-arm64.exe
+          \`\`\`
+
+          ## Checksums
+
+          SHA-256 checksums are available in:
+
+          \`\`\`text
+          SHA256SUMS
+          \`\`\`
+          EOF
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Raqule ${{ github.ref_name }}
+          body_path: RELEASE_NOTES.md
+          prerelease: ${{ steps.prerelease.outputs.value }}
+          files: release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
