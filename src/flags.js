@@ -3,7 +3,6 @@ import { packageInfo } from './packageInfo.js';
 
 async function readFlags() {
 	program
-		.name(packageInfo.name)
 		.description(packageInfo.description)
 		.version(packageInfo.version)
 		.option('-a, --all', 'Collect all files & directories including [.git, node_modules]')
