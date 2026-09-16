@@ -81,7 +81,7 @@ rql
 | Flag | Description |
 | :---: | :---: |
 | `-d, --depth <number>` | Set maximum folder traversal depth |
-| `-a, --all` | Include hidden files and ignored folders (e.g., node_modules, .git) |
+| `-a, --all` | Include hidden files and ignored folders (e.g., node_modules, .git, target, etc) **Not Recommended** |
 | `-t, --tree` | Generate project tree structure only (without file contents) |
 | `-p, --print` | Print the result (context.md content) in the Terminal |
 | `-P, --printOnly` | Print the result (context.md content) in the Terminal and delete it (context.md) after printing it |

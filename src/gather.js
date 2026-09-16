@@ -1,40 +1,48 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { defaultIgnoreList } from './ignoreList.js';
+import { getSpecialFileHandler } from './specialFiles.js';
 
-async function gather(dirPath, outputPath, contextFile, flags, currentDepth = 1) {
- 	if (currentDepth > flags.depth) return;
+async function gather(dirPath, flags, currentDepth = 1) {
+	if (currentDepth > flags.depth) return {};
 
- 	let dirFiles = await fs.promises.readdir(dirPath);
- 	
- 	if (!flags.all) {
-		dirFiles = dirFiles.filter(item => !['node_modules', '.git', 'package-lock.json', 'LICENSE'].includes(item));
- 	}
+	let dirFiles = await fs.promises.readdir(dirPath);
 
- 	if (currentDepth === 1) {
-		try {
-			await fs.promises.access(contextFile);
-		} catch {
-			await fs.promises.writeFile(contextFile, '');
-		}
- 	}
+	if (!flags.all) {
+		dirFiles = dirFiles.filter(item => !defaultIgnoreList.includes(item));
+	}
+
+	const result = {};
 
 	for (let i = 0; i < dirFiles.length; i++) {
 		const fileName = dirFiles[i];
 		const filePath = path.join(dirPath, fileName);
-		const absoluteFilePath = path.resolve(filePath);
-
-		if (absoluteFilePath === contextFile) continue;
 
 		if ((await fs.promises.stat(filePath)).isDirectory()) {
-			await gather(filePath, outputPath, contextFile, flags, currentDepth + 1);
+			result[fileName] = {
+				isFolder: true,
+				children: await gather(filePath, flags, currentDepth + 1),
+			};
 			continue;
 		}
 
-		const fileContent = await fs.promises.readFile(filePath, 'utf8');
-		const fileType = path.extname(fileName).slice(1);
+		let fileContent = await fs.promises.readFile(filePath, 'utf8');
+		const extension = path.extname(fileName).slice(1);
 
-		await fs.promises.appendFile(contextFile, `${filePath} Content :\n\n\`\`\`${fileType}\n${fileContent}\n\`\`\`\n\n${'-'.repeat(5)}~END~${'-'.repeat(5)}\n\n`);
+		const specialHandler = getSpecialFileHandler(fileName);
+		if (specialHandler) {
+			fileContent = specialHandler(fileContent);
+		}
+
+		result[fileName] = {
+			isFolder: false,
+			path: filePath,
+			content: fileContent,
+			extension,
+		};
 	}
+
+	return result;
 }
 
 export { gather };

@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { defaultIgnoreList } from './ignoreList.js';
 
-async function generateTree(dirPath, contextFile, flags) {
+async function generateTree(dirPath, flags) {
     async function generateTreeProcess(dirPath, indent = '', currentDepth = 1) {
         let treeStr = '';
 
@@ -14,16 +15,14 @@ async function generateTree(dirPath, contextFile, flags) {
 
         for (let i = 0; i < items.length; i++) {
             const item = items[i];
-            const absoluteItemPath = path.resolve(item.parentPath, item.name);
 
-            if (absoluteItemPath === contextFile) continue;
-            
             const isLast = i === items.length - 1;
     		const pointer = isLast ? '└── ' : '├── ';
 
-            treeStr += `${indent}${pointer}${item.name}\n`;
+            const suffix = item.isDirectory() ? '/' : '';
+            treeStr += `${indent}${pointer}${item.name}${suffix}\n`;
 
-            if (item.isDirectory() && currentDepth < flags.depth && (flags.all || !['node_modules', '.git'].includes(item.name))) {
+            if (item.isDirectory() && currentDepth < flags.depth && (flags.all || !defaultIgnoreList.includes(item.name))) {
                 const nextIndent = indent + (isLast ? '    ' : '│   ');
                 const subPath = path.join(dirPath, item.name);
 
@@ -32,7 +31,8 @@ async function generateTree(dirPath, contextFile, flags) {
         }
         return treeStr;
     }
-    await fs.promises.appendFile(contextFile, `Project Tree:\n\n\`\`\`\n${await generateTreeProcess(dirPath)}\n\`\`\`\n\n${'-'.repeat(5)}~END~${'-'.repeat(5)}\n\n`);
+
+    return await generateTreeProcess(dirPath);
 }
 
 export { generateTree };
