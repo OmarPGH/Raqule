@@ -60,6 +60,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Update Version in package.json
+        shell: bash
+        run: |
+          RAW_VERSION="${{ github.ref_name }}"
+          CLEAN_VERSION="${RAW_VERSION#v}"
+          npm version "$CLEAN_VERSION" --no-git-tag-version --allow-same-version
+
       - name: Prepare build directories
         shell: bash
         run: |
