@@ -108,29 +108,36 @@ Made by Raqule.
 
 ```
 Raqule
-├── .git
+├── .git/
+├── .github/
+│   └── workflows/
+│       ├── release.yml
+│       └── semgrep.yml
 ├── .gitignore
 ├── LICENSE
 ├── README.md
-├── bin
+├── bin/
 │   └── cli.js
-├── node_modules
+├── node_modules/
 ├── package-lock.json
 ├── package.json
-├── src
+├── src/
 │   ├── flags.js
+│   ├── format.js
 │   ├── gather.js
+│   ├── ignoreList.js
 │   ├── index.js
 │   ├── packageInfo.js
 │   ├── prompts.js
-│   └── tree.js
-└── testProject
+│   ├── specialFiles.js
+│   ├── tree.js
+│   └── write.js
+└── testProject/
     ├── README.md
     ├── main.mjs
-    └── modules
+    └── modules/
         ├── moduleOne.js
         └── moduleTwo.js
-
 ```
 
 ## ⚖️ License
