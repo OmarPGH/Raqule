@@ -14,14 +14,14 @@
 
 ## Table of Contents
 
-- [Features](#features)
-- [Built With](#built-with)
-- [Installation](#installation)
-- [Building from Source (Developers)](#building-from-source-developers)
-- [Available Flags](#available-flags)
-- [Project Structure](#project-structure)
-- [License](#license)
-- [Author](#author)
+- [Features](#-features)
+- [Built With](#%EF%B8%8F-built-with)
+- [Installation](#-installation)
+- [Building from Source (Developers)](#%EF%B8%8F-building-from-source-developers)
+- [Available Flags](#-available-flags)
+- [Project Structure](#-project-structure)
+- [License](#%EF%B8%8F-license)
+- [Author](#%E2%80%8D-author)
 
 ---
 
