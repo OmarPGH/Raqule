@@ -3,8 +3,12 @@
 ### A smart code gatherer for LLMs & AI
 
 ![latest release](https://img.shields.io/github/v/tag/OmarPGH/Raqule?sort=semver&label=Latest%20Release&color=brightgreen)
+
 ![license](https://img.shields.io/github/license/OmarPGH/Raqule?label=License&color=yellow)
+
 ![language](https://img.shields.io/badge/Language-JavaScript%20ES%20Module-blue)
+
+![raqule downloads](https://img.shields.io/github/downloads/OmarPGH/Raqule/total?color=red&label=Raqule%20Downloads)
 
 ---
 
