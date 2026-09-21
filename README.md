@@ -172,17 +172,17 @@ npm link
 
 | Flag | Description |
 | :--- | :--- |
-| `-d, --depth <number>` | Set maximum folder traversal depth (whole number, 1 or greater) |
-| `-a, --all` | Include hidden files and ignored folders (e.g., node_modules, .git, target, etc) **Not Recommended** |
-| `-e, --exclude <names...>` | Exclude unwanted files/folders from both the tree and the contents |
-| `--ce, --content-exclude <names...>` | Exclude unwanted files/folders from the contents only |
-| `--te, --tree-exclude <names...>` | Exclude unwanted folders from the tree only (their contents are not expanded) |
-| `-i, --include <names...>` | Include wanted files/folders, even if they are excluded by default or manually |
-| `--ci, --content-include <names...>` | Include wanted files/folders in the contents, even if they are excluded by default or manually |
-| `--ti, --tree-include <names...>` | Include wanted folders in the tree, even if they are excluded by default or manually |
-| `-t, --tree` | Generate project tree structure only (without file contents) |
-| `-p, --print` | Print the result (context.md content) in the Terminal |
-| `-P, --printOnly` | Print the result (context.md content) in the Terminal and delete it (context.md) after printing it |
+| `-d, --depth <number>` | Set the maximum folder depth (whole number, 1 or greater) |
+| `-a, --all` | Do not apply the default ignore list (e.g. .git, node_modules, target). **Not Recommended** |
+| `-e, --exclude <names...>` | Skip these names in the contents, and do not expand them in the tree |
+| `--ce, --content-exclude <names...>` | Skip these names in the contents only |
+| `--te, --tree-exclude <names...>` | Do not expand these folders in the tree (they are still listed) |
+| `-i, --include <names...>` | Remove these names from the ignore list, even if ignored by default or by `-e` |
+| `--ci, --content-include <names...>` | Same as `--include`, but for the contents only |
+| `--ti, --tree-include <names...>` | Same as `--include`, but for the tree only |
+| `-t, --tree` | Generate only the project tree, without file contents |
+| `-p, --print` | Print the result in the terminal, and also save it to `context.md` |
+| `-P, --print-only` | Print the result in the terminal only, without creating `context.md` |
 | `-V, --version` | Output the current version |
 | `-h, --help` | Display help information |
 
@@ -194,11 +194,11 @@ rql -d 2
 rql -a
 # Generate project tree structure only
 rql -t
-# Exclude the docs and tests folders
+# Skip the docs and tests folders
 rql -e docs tests
 # Include the dist folder even though it is ignored by default
 rql -i dist
-# Hide "assets" from the contents but keep it in the tree
+# Skip "assets" in the contents only (the tree is not affected)
 rql --ce assets
 # Print the result in the terminal without creating context.md
 rql -P
@@ -218,7 +218,7 @@ The filtering order is:
 
 So `-i` always beats `-e`, and both beat the defaults. 💪
 
-> **Note:** In the tree, an ignored folder is still listed by name, but its children are not expanded. In the contents, ignored files/folders are skipped completely.
+> **Note:** In the tree, an ignored folder is still listed by name, but its children are not expanded (ignored files are always listed). In the contents, ignored files/folders are skipped completely.
 
 ---
 
