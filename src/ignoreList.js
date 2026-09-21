@@ -83,3 +83,5 @@ const defaultIgnoreList = [
 	'.DS_Store',
 	'Thumbs.db',
 ];
+
+export { defaultIgnoreList };
