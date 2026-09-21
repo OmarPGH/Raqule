@@ -1,6 +1,6 @@
 {
   "name": "raqule",
-  "version": "0.0.1-beta.1",
+  "version": "0.0.2-beta.1",
   "description": "A code gatherer, specially designed for LLMs/AI like (ChatGPT, Claude, Gemini) to provide for them whole project context/codes in a single file.",
   "main": "index.js",
   "scripts": {
