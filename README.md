@@ -23,7 +23,10 @@
 - [Installation](#-installation)
 - [Building from Source (Developers)](#%EF%B8%8F-building-from-source-developers)
 - [Available Flags](#-available-flags)
+- [Filtering Files & Folders](#%EF%B8%8F-filtering-files--folders)
+- [Default Ignore List](#-default-ignore-list)
 - [Project Structure](#-project-structure)
+- [Contributing](#-contributing)
 - [License](#%EF%B8%8F-license)
 - [Author](#%E2%80%8D-author)
 
@@ -34,6 +37,10 @@
 * **Visual Project Tree:** Generates a structured directory tree so LLMs instantly understand your architecture.
 
 * **Smart File Gathering:** Appends all relevant source code files sequentially with code block formatting.
+
+* **Fine-Grained Filtering:** Exclude or include files/folders globally, or separately for the tree and the contents.
+
+* **Safe by Default:** Automatically skips secrets (`.env`, `.npmrc`, ...), lock files, build outputs, and dependency folders.
 
 * **Fast & Lightweight:** Built with pure Node.js asynchronous APIs for maximum speed.
 
@@ -79,6 +86,7 @@ To run Raqule seamlessly from **any terminal directory** using the shortcut comm
 
 <details>
 <summary><b>🐧 Linux Setup</b></summary>
+
 1. **Make it executable & rename to `rql`:**
    ```bash
    # Make the file executable
@@ -90,11 +98,13 @@ To run Raqule seamlessly from **any terminal directory** using the shortcut comm
    ```bash
    sudo mv rql /usr/local/bin/
    ```
+
 Now you can run `rql` anywhere! 🎯
 </details>
 
 <details>
 <summary><b>🍎 macOS Setup</b></summary>
+
 1. **Make it executable & rename to `rql`:**
    ```bash
    # Make the file executable
@@ -111,11 +121,13 @@ Now you can run `rql` anywhere! 🎯
    ```bash
    xattr -d com.apple.quarantine /usr/local/bin/rql
    ```
+
 Now you can run `rql` anywhere! 🎯
 </details>
 
 <details>
 <summary><b>🪟 Windows Setup</b></summary>
+
 1. **Rename the File:**
    Rename `Raqule-vX.Y.Z-win-x64.exe` (or `win-arm64`) to `rql.exe`.
 2. **Move to a Safe Folder:**
@@ -143,10 +155,10 @@ rql --version
 
 ## 🛠️ Building from Source (Developers)
 
-If you prefer installing from source code using Node.js & NPM:
+If you prefer installing from source code using Node.js & NPM (a recent Node.js version is required, the release binaries are built with Node.js 26):
 ```bash
 # Clone repository
-git clone [https://github.com/OmarPGH/Raqule.git](https://github.com/OmarPGH/Raqule.git)
+git clone https://github.com/OmarPGH/Raqule.git
 cd Raqule
 # Install dependencies
 npm ci
@@ -160,8 +172,14 @@ npm link
 
 | Flag | Description |
 | :--- | :--- |
-| `-d, --depth <number>` | Set maximum folder traversal depth |
+| `-d, --depth <number>` | Set maximum folder traversal depth (whole number, 1 or greater) |
 | `-a, --all` | Include hidden files and ignored folders (e.g., node_modules, .git, target, etc) **Not Recommended** |
+| `-e, --exclude <names...>` | Exclude unwanted files/folders from both the tree and the contents |
+| `--ce, --content-exclude <names...>` | Exclude unwanted files/folders from the contents only |
+| `--te, --tree-exclude <names...>` | Exclude unwanted folders from the tree only (their contents are not expanded) |
+| `-i, --include <names...>` | Include wanted files/folders, even if they are excluded by default or manually |
+| `--ci, --content-include <names...>` | Include wanted files/folders in the contents, even if they are excluded by default or manually |
+| `--ti, --tree-include <names...>` | Include wanted folders in the tree, even if they are excluded by default or manually |
 | `-t, --tree` | Generate project tree structure only (without file contents) |
 | `-p, --print` | Print the result (context.md content) in the Terminal |
 | `-P, --printOnly` | Print the result (context.md content) in the Terminal and delete it (context.md) after printing it |
@@ -176,7 +194,46 @@ rql -d 2
 rql -a
 # Generate project tree structure only
 rql -t
+# Exclude the docs and tests folders
+rql -e docs tests
+# Include the dist folder even though it is ignored by default
+rql -i dist
+# Hide "assets" from the contents but keep it in the tree
+rql --ce assets
+# Print the result in the terminal without creating context.md
+rql -P
 ```
+
+---
+
+## 🎛️ Filtering Files & Folders
+
+Raqule matches names **exactly** (for example `node_modules` or `README.md`), not glob patterns.
+
+The filtering order is:
+
+1. The [default ignore list](#-default-ignore-list) is applied (unless `-a` is used).
+2. Your exclude flags are added (`-e`, plus `--ce` for contents or `--te` for the tree).
+3. Your include flags **win** and remove matching names from the ignored list (`-i`, plus `--ci` or `--ti`).
+
+So `-i` always beats `-e`, and both beat the defaults. 💪
+
+> **Note:** In the tree, an ignored folder is still listed by name, but its children are not expanded. In the contents, ignored files/folders are skipped completely.
+
+---
+
+## 🙈 Default Ignore List
+
+Unless you pass `-a`, Raqule skips the following names:
+
+* **Version control:** `.git`, `.svn`, `.hg`
+* **Dependencies & builds:** `node_modules`, `dist`, `build`, `coverage`, `target`, `vendor`, `out`, `bin`, `obj`, `.next`, `.nuxt`, `.output`, `.turbo`, `.cache`
+* **Lock files:** `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `bun.lockb`, `Cargo.lock`
+* **Secrets & credentials:** `.env` (and variants), `.npmrc`, `.pypirc`, `.netrc`, `.aws`, `.azure`, `.gcloud`, `.kube`
+* **Language & tool caches:** `__pycache__`, `.venv`, `venv`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `.gradle`, `.idea`, `.dart_tool`, `.pub-cache`, `.bundle`, `DerivedData`, `CMakeFiles`, and more
+* **OS junk:** `.DS_Store`, `Thumbs.db`
+
+Also, `LICENSE` files are shortened to their first 3 lines so they don't waste your LLM's context. 🧠
 
 ---
 
@@ -190,6 +247,7 @@ Raqule
 │       ├── release.yml
 │       └── semgrep.yml
 ├── .gitignore
+├── CONTRIBUTING.md
 ├── LICENSE
 ├── README.md
 ├── bin/
@@ -197,24 +255,30 @@ Raqule
 ├── node_modules/
 ├── package-lock.json
 ├── package.json
-├── src/
-│   ├── flags.js
-│   ├── format.js
-│   ├── gather.js
-│   ├── ignoreList.js
-│   ├── index.js
-│   ├── packageInfo.js
-│   ├── prompts.js
-│   ├── specialFiles.js
-│   ├── tree.js
-│   └── write.js
-└── testProject/
-    ├── README.md
-    ├── main.mjs
-    └── modules/
-        ├── moduleOne.js
-        └── moduleTwo.js
+└── src/
+    ├── flags.js
+    ├── format.js
+    ├── gather.js
+    ├── helpers/
+    │   └── ignore.js
+    ├── ignoreList.js
+    ├── index.js
+    ├── packageInfo.js
+    ├── prompts.js
+    ├── specialFiles.js
+    ├── tree.js
+    └── write.js
 ```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) first. The short version:
+
+* Make precise, line-by-line edits (no full file overwrites).
+* Keep your code simple and readable (no over-engineering).
+* Reply to review comments quickly, and apply requested changes within 2 days.
 
 ---
 
