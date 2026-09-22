@@ -5,10 +5,17 @@ import { generateTree } from './tree.js';
 import { formatTree, formatFiles, formatFinal } from './format.js';
 import { write } from './write.js';
 import { readFlags } from './flags.js';
+import { readConfig, writeConfig } from './config.js';
 
 async function main() {
 	const flags = await readFlags();
 	const dirPath = await askAboutDirPath();
+	const configuration = await readConfig(dirPath);
+
+	if (Object.keys(configuration).length < 1) {
+		await writeConfig(dirPath);
+	}
+
 	let outputPath;
 
 	if (flags.printOnly) {
@@ -25,13 +32,13 @@ async function main() {
 		flags.depth = Number(flags.depth);
 	}
 
-	const treeStr = await generateTree(dirPath, flags);
+	const treeStr = await generateTree(dirPath, flags, configuration);
 	const formattedTree = formatTree(treeStr);
 
 	let finalContent = formattedTree;
 
 	if (!flags.tree) {
-		const filesTree = await gather(dirPath, flags);
+		const filesTree = await gather(dirPath, flags, configuration);
 		const formattedFiles = formatFiles(filesTree);
 		finalContent = formatFinal(formattedTree, formattedFiles);
 	}

@@ -4,13 +4,13 @@ import { defaultIgnoreList } from './ignoreList.js';
 import { getSpecialFileHandler } from './specialFiles.js';
 import { exclude, include } from './helpers/ignore.js';
 
-async function gather(dirPath, flags, currentDepth = 1) {
+async function gather(dirPath, flags, configuration, currentDepth = 1) {
 	if (currentDepth > flags.depth) return {};
 	
 	let dirFiles = await fs.promises.readdir(dirPath);
     let ignored = [];
 
-    ignored = exclude(ignored, flags, 'content');
+    ignored = exclude(ignored, flags, configuration, 'content');
     ignored = include(ignored, flags, 'content');
 	ignored = [...new Set(ignored)];
 
@@ -23,7 +23,7 @@ async function gather(dirPath, flags, currentDepth = 1) {
 		if ((await fs.promises.stat(filePath)).isDirectory()) {
 			result[fileName] = {
 				isFolder: true,
-				children: await gather(filePath, flags, currentDepth + 1),
+				children: await gather(filePath, flags, configuration, currentDepth + 1),
 			};
 			continue;
 		}

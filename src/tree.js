@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { exclude, include } from './helpers/ignore.js';
 
-async function generateTree(dirPath, flags) {
+async function generateTree(dirPath, flags, configuration) {
     async function generateTreeProcess(dirPath, indent = '', currentDepth = 1) {
         let treeStr = '';
 
@@ -14,7 +14,7 @@ async function generateTree(dirPath, flags) {
         let items = await fs.promises.readdir(dirPath, { withFileTypes: true });
         let ignored = [];
         
-        ignored = exclude(ignored, flags, 'tree');
+        ignored = exclude(ignored, flags, configuration, 'tree');
         ignored = include(ignored, flags, 'tree');
         ignored = [...new Set(ignored)];
 

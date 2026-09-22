@@ -1,5 +1,8 @@
 import { defaultIgnoreList } from '../ignoreList.js';
-export function exclude(ignored, flags, type) {
+export function exclude(ignored, flags, configuration, type) {
+    if (configuration.ignore) {
+		ignored = [...ignored, ...configuration.ignore];
+    }
     if (!flags.all) {
         ignored = [...ignored, ...defaultIgnoreList];
     }
