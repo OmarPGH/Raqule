@@ -5,7 +5,8 @@ const specialFileHandlers = {
 };
 
 function getSpecialFileHandler(fileName) {
-	const baseName = fileName.split('.')[0].toLowerCase();
+	const parts = fileName.split('.');
+	const baseName = (parts[0] || parts[1] || '').toLowerCase();
 	return specialFileHandlers[baseName];
 }
 
