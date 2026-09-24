@@ -4,6 +4,14 @@ import { defaultIgnoreList } from './ignoreList.js';
 import { getSpecialFileHandler } from './specialFiles.js';
 import { exclude, include } from './helpers/ignore.js';
 
+const BINARY_EXTENSIONS = new Set([
+	'png', 'jpg', 'jpeg', 'gif', 'webp', 'ico', 'bmp', 'svg',
+	'pdf', 'zip', 'gz', 'tar', 'rar', '7z',
+	'woff', 'woff2', 'ttf', 'eot',
+	'mp3', 'mp4', 'mov', 'avi', 'wav',
+	'exe', 'dll', 'so', 'bin', 'class', 'wasm',
+]);
+
 async function gather(dirPath, flags, configuration, currentDepth = 1) {
 	if (currentDepth > flags.depth) return {};
 	
@@ -28,8 +36,19 @@ async function gather(dirPath, flags, configuration, currentDepth = 1) {
 			continue;
 		}
 
-		let fileContent = await fs.promises.readFile(filePath, 'utf8');
 		const extension = path.extname(fileName).slice(1);
+
+		if (BINARY_EXTENSIONS.has(extension.toLowerCase())) {
+			result[fileName] = {
+				isFolder: false,
+				path: filePath,
+				content: '[Binary file skipped]',
+				extension,
+			};
+			continue;
+		}
+
+		let fileContent = await fs.promises.readFile(filePath, 'utf8');
 
 		const specialHandler = getSpecialFileHandler(fileName);
 		if (specialHandler) {
