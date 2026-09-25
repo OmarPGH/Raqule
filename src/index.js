@@ -25,13 +25,6 @@ async function main() {
 	}
 
 	const contextFile = path.resolve(outputPath, 'context.md');
-
-	if (!flags.depth) {
-		flags.depth = Infinity;
-	} else {
-		flags.depth = Number(flags.depth);
-	}
-
 	const treeStr = await generateTree(dirPath, flags, configuration);
 	const formattedTree = formatTree(treeStr);
 
