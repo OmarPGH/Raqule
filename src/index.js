@@ -6,6 +6,7 @@ import { formatTree, formatFiles, formatFinal } from './format.js';
 import { write } from './write.js';
 import { readFlags } from './flags.js';
 import { readConfig, writeConfig } from './config.js';
+import { countTokens } from './tokens.js';
 
 async function main() {
 	const flags = await readFlags();
@@ -39,6 +40,11 @@ async function main() {
 	if (!flags.printOnly) {
 		await write(finalContent, contextFile);
 		console.log(`You'll find context.md file at [ ${path.join(outputPath, 'context.md')} | ${contextFile} ]`);
+	}
+
+	if (flags.tokens) {
+		const totalTokens = countTokens(finalContent);
+		console.log(`\nEstimated Total Tokens: ${totalTokens.toLocaleString()}`)
 	}
 
 	if (flags.print || flags.printOnly) {

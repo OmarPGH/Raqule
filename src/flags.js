@@ -25,7 +25,8 @@ async function readFlags() {
                 .option('--ti, --tree-include <names...>', 'Same as --include, but for the tree only')
                 .option('-p, --print', 'Print the result in the terminal, and also save it to context.md')
                 .option('-P, --print-only', 'Print the result in the terminal only, without creating context.md')
-                .option('-t, --tree', 'Generate only the project tree, without file contents');
+                .option('-t, --tree', 'Generate only the project tree, without file contents')
+                .option('-T, --tokens', 'Display estimated total token count for the output');
 
         program.parse(process.argv);
 

@@ -54,6 +54,10 @@
 
 * **[Inquirer](https://www.npmjs.com/package/@inquirer/prompts)** - Interactive command-line prompts
 
+* **[js-tiktoken](https://www.npmjs.com/package/js-tiktoken)** - Pure JavaScript OpenAI BPE token counting
+
+* **[smol-toml](https://www.npmjs.com/package/smol-toml)** - Fast & lightweight TOML parser and serializer
+
 * **Node.js Native Modules** (`fs`, `path`)
 
 ---
@@ -172,36 +176,39 @@ npm link
 
 | Flag | Description |
 | :--- | :--- |
-| `-d, --depth <number>` | Set the maximum folder depth (whole number, 1 or greater) |
 | `-a, --all` | Do not apply the default ignore list (e.g. .git, node_modules, target). **Not Recommended** |
+| `-d, --depth <number>` | Set the maximum folder depth (whole number, 1 or greater) |
 | `-e, --exclude <names...>` | Skip these names in the contents, and do not expand them in the tree |
 | `--ce, --content-exclude <names...>` | Skip these names in the contents only |
 | `--te, --tree-exclude <names...>` | Do not expand these folders in the tree (they are still listed) |
 | `-i, --include <names...>` | Remove these names from the ignore list, even if ignored by default or by `-e` |
 | `--ci, --content-include <names...>` | Same as `--include`, but for the contents only |
 | `--ti, --tree-include <names...>` | Same as `--include`, but for the tree only |
-| `-t, --tree` | Generate only the project tree, without file contents |
 | `-p, --print` | Print the result in the terminal, and also save it to `context.md` |
 | `-P, --print-only` | Print the result in the terminal only, without creating `context.md` |
+| `-t, --tree` | Generate only the project tree, without file contents |
+| `-T, --tokens` | Display estimated total token count for the output |
 | `-V, --version` | Output the current version |
 | `-h, --help` | Display help information |
 
 **Examples:**
 ```bash
-# Gather code with a max depth of 2 levels
-rql -d 2
 # Include all ignored files/folders
 rql -a
-# Generate project tree structure only
-rql -t
+# Gather code with a max depth of 2 levels
+rql -d 2
 # Skip the docs and tests folders
 rql -e docs tests
 # Include the dist folder even though it is ignored by default
 rql -i dist
-# Skip "assets" in the contents only (the tree is not affected)
-rql --ce assets
 # Print the result in the terminal without creating context.md
 rql -P
+# Generate project tree structure only
+rql -t
+# Display estimated total token count for the output
+rql -T
+# Skip "assets" in the contents only (the tree is not affected)
+rql --ce assets
 ```
 
 ---
