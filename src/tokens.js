@@ -1,11 +1,7 @@
-import { encodingForModel } from 'js-tiktoken';
+import { getEncoding } from 'js-tiktoken';
 
-export function countTokens(text, modelName = 'gpt-5') {
+export function countTokens(text, encoding = 'o200k_base') {
 	if (!text) return 0;
-	try {
-		const enc = encodingForModel(modelName);
-		return enc.encode(text).length;
-	} catch (error) {
-		return Math.ceil(text.length / 4);
-	}
+	const enc = getEncoding(encoding);
+	return enc.encode(text).length;
 }
