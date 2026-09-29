@@ -207,15 +207,15 @@ rql -P
 rql -t
 # Display estimated total token count for the output
 rql -T
-# Skip "assets" in the contents only (the tree is not affected)
-rql --ce assets
+# Skip all files inside "src/secrets/" in the contents only (the tree is not affected)
+rql --ce src/secrets/**
 ```
 
 ---
 
 ## 🎛️ Filtering Files & Folders
 
-Raqule matches names **exactly** (for example `node_modules` or `README.md`), not glob patterns.
+Raqule matches names/extensions by glob patterns (for example `**/*.test.js` or `src/secrets/**`).
 
 The filtering order is:
 
