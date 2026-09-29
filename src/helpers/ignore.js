@@ -1,4 +1,6 @@
+import mm from 'micromatch';
 import { defaultIgnoreList } from '../ignoreList.js';
+
 export function exclude(ignored, flags, configuration, type) {
     if (configuration.ignore) {
 		ignored = [...ignored, ...configuration.ignore];
@@ -25,4 +27,8 @@ export function include(ignored, flags, type) {
     }
 
     return ignored;
+}
+
+export function isIgnored(relativePath, fileName, ignored) {
+    return mm.isMatch(relativePath, ignored) || mm.isMatch(fileName, ignored);
 }

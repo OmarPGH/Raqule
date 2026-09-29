@@ -19,14 +19,14 @@ const defaultIgnoreList = [
 	'.output',
 	'.turbo',
 	'.cache',
+	'*.tsbuildinfo',
+	'*.log',
+	'npm-debug.log*',
+	'yarn-debug.log*',
+	'yarn-error.log*',
 
 	// Secrets / Credentials
-	'.env',
-	'.env.local',
-	'.env.development',
-	'.env.production',
-	'.env.test',
-	'.env.staging',
+	'**.env!(.example|.sample)*',
 	'.npmrc',
 	'.pypirc',
 	'.netrc',
@@ -36,6 +36,9 @@ const defaultIgnoreList = [
 	'.azure',
 	'.gcloud',
 	'.kube',
+	'.terraform',
+	'*.tfstate',
+	'*.tfstate.*',
 
 	// Rust
 	'target',
@@ -43,45 +46,54 @@ const defaultIgnoreList = [
 
 	// Python
 	'__pycache__',
+	'*.pyc',
 	'.venv',
 	'venv',
 	'.pytest_cache',
 	'.mypy_cache',
 	'.ruff_cache',
+	'.tox',
+	'*.egg-info',
 
 	// Java / Kotlin / JVM
 	'.gradle',
 	'.idea',
-	'out',
+	'*.class',
+	'*.jar',
 
 	// Go
-	'vendor',
-
-	// PHP
 	'vendor',
 
 	// .NET
 	'bin',
 	'obj',
+	'*.user',
 
 	// C / C++
 	'CMakeFiles',
 	'cmake-build-debug',
 	'cmake-build-release',
+	'*.o',
+	'*.obj',
 
 	// Dart / Flutter
 	'.dart_tool',
 	'.pub-cache',
+	'*.g.dart',
 
 	// Ruby
 	'.bundle',
 
 	// Swift / Xcode
 	'DerivedData',
+	'*.xcuserstate',
 
 	// OS / Editor junk
 	'.DS_Store',
 	'Thumbs.db',
+	'*.swp',
+	'*.swo',
+	'*~',
 ];
 
 export { defaultIgnoreList };

@@ -10,7 +10,7 @@ import { countTokens } from './tokens.js';
 
 async function main() {
 	const flags = await readFlags();
-	const dirPath = await askAboutDirPath();
+	const dirPath = path.resolve(await askAboutDirPath());
 	const configuration = await readConfig(dirPath);
 
 	if (Object.keys(configuration).length < 1) {

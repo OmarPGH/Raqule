@@ -12,7 +12,7 @@ function formatFiles(filesObj) {
 				continue;
 			}
 
-			formattedFiles.push(`${entry.path} Content :\n\n\`\`\`${entry.extension}\n${entry.content}\n\`\`\`\n\n${'-'.repeat(5)}~END~${'-'.repeat(5)}\n\n`);
+			formattedFiles.push(`${entry.relativePath} Content :\n\n\`\`\`${entry.extension}\n${entry.content}\n\`\`\`\n\n${'-'.repeat(5)}~END~${'-'.repeat(5)}\n\n`);
 		}
 
 		return formattedFiles;

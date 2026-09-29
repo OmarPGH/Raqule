@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { defaultIgnoreList } from './ignoreList.js';
 import { getSpecialFileHandler } from './specialFiles.js';
-import { exclude, include } from './helpers/ignore.js';
+import { exclude, include, isIgnored } from './helpers/ignore.js';
 
 const BINARY_EXTENSIONS = new Set([
 	'png', 'jpg', 'jpeg', 'gif', 'webp', 'ico', 'bmp', 'svg',
@@ -12,7 +12,7 @@ const BINARY_EXTENSIONS = new Set([
 	'exe', 'dll', 'so', 'bin', 'class', 'wasm',
 ]);
 
-async function gather(dirPath, flags, configuration, currentDepth = 1) {
+async function gather(dirPath, flags, configuration, rootDirPath = dirPath, currentDepth = 1) {
 	if (currentDepth > flags.depth) return {};
 	
 	let dirFiles = await fs.promises.readdir(dirPath);
@@ -25,13 +25,15 @@ async function gather(dirPath, flags, configuration, currentDepth = 1) {
 	const result = {};
 	for (let i = 0; i < dirFiles.length; i++) {
 		const fileName = dirFiles[i];
-		if (ignored.includes(fileName)) continue;
 		const filePath = path.join(dirPath, fileName);
+		const relativePath = path.relative(rootDirPath, filePath).split(path.sep).join('/');
+
+		if (isIgnored(relativePath, fileName, ignored)) continue;
 
 		if ((await fs.promises.stat(filePath)).isDirectory()) {
 			result[fileName] = {
 				isFolder: true,
-				children: await gather(filePath, flags, configuration, currentDepth + 1),
+				children: await gather(filePath, flags, configuration, rootDirPath, currentDepth + 1),
 			};
 			continue;
 		}
@@ -42,6 +44,7 @@ async function gather(dirPath, flags, configuration, currentDepth = 1) {
 			result[fileName] = {
 				isFolder: false,
 				path: filePath,
+				relativePath: relativePath,
 				content: '[Binary file skipped]',
 				extension,
 			};
@@ -58,6 +61,7 @@ async function gather(dirPath, flags, configuration, currentDepth = 1) {
 		result[fileName] = {
 			isFolder: false,
 			path: filePath,
+			relativePath: relativePath,
 			content: fileContent,
 			extension,
 		};
