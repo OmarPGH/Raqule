@@ -24,6 +24,7 @@
 - [Building from Source (Developers)](#%EF%B8%8F-building-from-source-developers)
 - [Available Flags](#-available-flags)
 - [Filtering Files & Folders](#%EF%B8%8F-filtering-files--folders)
+- [Project Config File](#%EF%B8%8F-project-config-file)
 - [Default Ignore List](#-default-ignore-list)
 - [Project Structure](#-project-structure)
 - [Contributing](#-contributing)
@@ -40,7 +41,11 @@
 
 * **Fine-Grained Filtering:** Exclude or include files/folders globally, or separately for the tree and the contents.
 
+* **Per-Project Config File:** Auto-generates a `raqule-config.toml` in your project so you can persist custom ignore rules without retyping flags every run.
+
 * **Safe by Default:** Automatically skips secrets (`.env`, `.npmrc`, ...), lock files, build outputs, and dependency folders.
+
+* **Token Estimation:** Get an estimated token count for the generated output before you paste it into your LLM.
 
 * **Fast & Lightweight:** Built with pure Node.js asynchronous APIs for maximum speed.
 
@@ -57,6 +62,8 @@
 * **[js-tiktoken](https://www.npmjs.com/package/js-tiktoken)** - Pure JavaScript OpenAI BPE token counting
 
 * **[smol-toml](https://www.npmjs.com/package/smol-toml)** - Fast & lightweight TOML parser and serializer
+
+* **[micromatch](https://www.npmjs.com/package/micromatch)** - Glob pattern matching for filtering files and folders
 
 * **Node.js Native Modules** (`fs`, `path`)
 
@@ -219,13 +226,36 @@ Raqule matches names/extensions by glob patterns (for example `**/*.test.js` or 
 
 The filtering order is:
 
-1. The [default ignore list](#-default-ignore-list) is applied (unless `-a` is used).
-2. Your exclude flags are added (`-e`, plus `--ce` for contents or `--te` for the tree).
-3. Your include flags **win** and remove matching names from the ignored list (`-i`, plus `--ci` or `--ti`).
+1. Your project's [config file](#%EF%B8%8F-project-config-file) ignore list is applied first.
+2. The [default ignore list](#-default-ignore-list) is applied (unless `-a` is used).
+3. Your exclude flags are added (`-e`, plus `--ce` for contents or `--te` for the tree).
+4. Your include flags **win** and remove matching names from the ignored list (`-i`, plus `--ci` or `--ti`).
 
-So `-i` always beats `-e`, and both beat the defaults. 💪
+So `-i` always beats `-e`, and both beat the defaults and the config file. 💪
 
 > **Note:** In the tree, an ignored folder is still listed by name, but its children are not expanded (ignored files are always listed). In the contents, ignored files/folders are skipped completely.
+
+---
+
+## ⚙️ Project Config File
+
+The first time you run Raqule inside a project, it automatically creates a `raqule-config.toml` file in that directory (if one doesn't already exist):
+
+```toml
+ignore = []
+```
+
+This file lets you persist your own ignore patterns for that specific project, so you don't have to retype `-e` flags every single run. Just add names or glob patterns to the `ignore` array:
+
+```toml
+ignore = ["docs", "*.test.js", "src/secrets/**"]
+```
+
+With the config above, every `rql` run in that project will automatically skip the `docs` folder, any `*.test.js` file, and everything inside `src/secrets/`, on top of the default ignore list — no extra flags needed. 🧠
+
+You can still combine it with CLI flags: the config file's ignore list is applied first, then the default list, then your `-e`/`-i` flags on top, following the [filtering order](#%EF%B8%8F-filtering-files--folders) above.
+
+> **Tip:** Commit `raqule-config.toml` to your repo so teammates get the same ignore rules automatically.
 
 ---
 
@@ -278,6 +308,8 @@ Raqule
     ├── tree.js
     └── write.js
 ```
+
+> **Note:** `raqule-config.toml` is auto-generated on first run inside a project — see [Project Config File](#%EF%B8%8F-project-config-file).
 
 ---
 
