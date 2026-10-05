@@ -324,7 +324,7 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) first.
 ---
 
 ## ⚖️ License
-This project is licensed under the **Apache-2.0**. See the LICENSE file for details.
+This project is licensed under the **Apache-2.0**. See the [LICENSE](LICENSE) file for details.
 
 ---
 
