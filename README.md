@@ -16,7 +16,11 @@
 
 ---
 
-## Table of Contents
+### 🗺️ Check Raqule **[Roadmap & Future Plans](./ROADMAP.md)**
+
+---
+
+## 📋 Table of Contents
 
 - [Features](#-features)
 - [Built With](#%EF%B8%8F-built-with)
