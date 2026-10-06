@@ -3,20 +3,91 @@ name: Release
 on:
   push:
     tags:
-      - "*"
+      - "v*"
 
 env:
   NODE_VERSION: "26.x"
   ESBUILD_VERSION: "0.28.2"
 
 jobs:
-  build:
-    name: Build ${{ matrix.target }}
-    runs-on: ${{ matrix.runner }}
+  check:
+    name: Validate release
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
       contents: read
-      
+    outputs:
+      prev_tag: ${{ steps.prev.outputs.prev_tag }}
+      prerelease: ${{ steps.prev.outputs.prerelease }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify checkout has full history
+        shell: bash
+        run: |
+          if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
+            echo "::error::Shallow clone detected. The checkout step needs fetch-depth: 0 so git describe/log can see tag history."
+            exit 1
+          fi
+
+      - name: Verify tag matches package.json version
+        shell: bash
+        run: |
+          PKG_VERSION="v$(node -p "require('./package.json').version")"
+          if [ "$PKG_VERSION" != "${GITHUB_REF_NAME}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match package.json version ${PKG_VERSION}"
+            exit 1
+          fi
+
+      - name: Detect channel, find previous tag, check for new commits
+        id: prev
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+
+          if [[ "$TAG" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+
+            PREV_TAG=$(git describe --tags --abbrev=0 --match 'v*-*' --exclude "$TAG" HEAD 2>/dev/null || echo "")
+
+            if [ -z "$PREV_TAG" ]; then
+              PREV_TAG=$(git describe --tags --abbrev=0 --match 'v*' --exclude 'v*-*' --exclude "$TAG" HEAD 2>/dev/null || echo "")
+            fi
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+
+            PREV_TAG=$(git describe --tags --abbrev=0 --match 'v*' --exclude 'v*-*' --exclude "$TAG" HEAD 2>/dev/null || echo "")
+          fi
+
+          echo "prev_tag=${PREV_TAG}" >> "$GITHUB_OUTPUT"
+
+          if [ -z "$PREV_TAG" ]; then
+            echo "✅ First tag in this channel — nothing to compare against."
+            exit 0
+          fi
+
+          COMMIT_COUNT=$(git rev-list "${PREV_TAG}..HEAD" --count)
+
+          if [ "$COMMIT_COUNT" -eq 0 ]; then
+            echo "::error::No new commits since ${PREV_TAG}. Aborting release."
+            exit 1
+          fi
+
+          echo "✅ Found ${COMMIT_COUNT} new commit(s) since ${PREV_TAG}."
+
+  build:
+    name: Build ${{ matrix.target }}
+    needs: check
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
     strategy:
       fail-fast: false
       matrix:
@@ -48,10 +119,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: ${{ env.NODE_VERSION }}
           architecture: ${{ matrix.arch }}
@@ -60,15 +133,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify tag matches package.json version
-        shell: bash
-        run: |
-          PKG_VERSION="v$(node -p "require('./package.json').version")"
-          if [ "$PKG_VERSION" != "${GITHUB_REF_NAME}" ]; then
-            echo "::error::Tag ${GITHUB_REF_NAME} does not match package.json version ${PKG_VERSION}"
-            exit 1
-          fi
-          
       - name: Prepare build directories
         shell: bash
         run: |
@@ -145,7 +209,7 @@ jobs:
           "./dist/${BINARY_NAME}" --version
 
       - name: Upload binary artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: ${{ matrix.target }}
           path: dist/${{ steps.binary.outputs.name }}
@@ -153,15 +217,21 @@ jobs:
 
   release:
     name: Publish GitHub Release
-    needs: build
+    needs: [check, build]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
       contents: write
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
       - name: Download all binaries
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           pattern: "*"
           path: release-assets
@@ -173,20 +243,6 @@ jobs:
           echo "Release assets:"
           find release-assets -maxdepth 1 -type f -print
 
-      - name: Detect pre-release tag
-        id: prerelease
-        shell: bash
-        run: |
-          TAG="${GITHUB_REF_NAME}"
-
-          if [[ "$TAG" =~ -(alpha|beta|rc)([.-]|$) ]]; then
-            echo "value=true" >> "$GITHUB_OUTPUT"
-            echo "Pre-release detected: ${TAG}"
-          else
-            echo "value=false" >> "$GITHUB_OUTPUT"
-            echo "Stable release detected: ${TAG}"
-          fi
-
       - name: Generate SHA-256 checksums
         working-directory: release-assets
         shell: bash
@@ -196,9 +252,27 @@ jobs:
       - name: Generate release notes
         env:
           VERSION: ${{ github.ref_name }}
+          PREV_TAG: ${{ needs.check.outputs.prev_tag }}
+          REPO: ${{ github.repository }}
         shell: bash
         run: |
-          cat > RELEASE_NOTES.md <<EOF
+          echo "## What's Changed" > RELEASE_NOTES.md
+          echo "" >> RELEASE_NOTES.md
+
+          if [ -n "$PREV_TAG" ]; then
+            git log "${PREV_TAG}..HEAD" --no-merges --pretty=format:"- %s (%h)" \
+              | sed 's/@/@\xE2\x80\x8B/g' >> RELEASE_NOTES.md
+            echo "" >> RELEASE_NOTES.md
+            echo "" >> RELEASE_NOTES.md
+            echo "**Full diff**: https://github.com/${REPO}/compare/${PREV_TAG}...${VERSION}" >> RELEASE_NOTES.md
+          else
+            echo "- Initial release 🎉" >> RELEASE_NOTES.md
+          fi
+
+          echo "" >> RELEASE_NOTES.md
+          echo "" >> RELEASE_NOTES.md
+
+          cat >> RELEASE_NOTES.md <<EOF
           # Raqule ${VERSION}
 
           Standalone executables for Linux, macOS, and Windows.
@@ -268,12 +342,12 @@ jobs:
           EOF
 
       - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
         with:
           tag_name: ${{ github.ref_name }}
           name: Raqule ${{ github.ref_name }}
           body_path: RELEASE_NOTES.md
-          prerelease: ${{ steps.prerelease.outputs.value }}
+          prerelease: ${{ needs.check.outputs.prerelease }}
           files: release-assets/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
