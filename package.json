@@ -21,7 +21,7 @@
   "license": "Apache-2.0",
   "type": "module",
   "dependencies": {
-    "@inquirer/prompts": "^8.5.2",
+    "@inquirer/prompts": "^8.7.2",
     "commander": "^15.0.0",
     "js-tiktoken": "^1.0.21",
     "micromatch": "^4.0.8",
