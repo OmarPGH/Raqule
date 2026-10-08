@@ -69,6 +69,8 @@
 
 * **[micromatch](https://www.npmjs.com/package/micromatch)** - Glob pattern matching for filtering files and folders
 
+* **[Zod](https://www.npmjs.com/package/zod)** - Schema validation for configuration parameters
+
 * **Node.js Native Modules** (`fs`, `path`)
 
 ---

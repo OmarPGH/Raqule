@@ -1,28 +1,40 @@
 import path from 'node:path';
-import { askAboutDirPath, askAboutOutputPath } from './prompts.js';
+import { dirPathInput, outputPathInput, addConfigFileInput } from './prompts.js';
 import { gather } from './gather.js';
 import { generateTree } from './tree.js';
 import { formatTree, formatFiles, formatFinal } from './format.js';
 import { write } from './write.js';
 import { readFlags } from './flags.js';
-import { readConfig, writeConfig } from './config.js';
+import { readConfig, writeConfig, validateConfig } from './config.js';
 import { countTokens } from './tokens.js';
 
 async function main() {
 	const flags = await readFlags();
-	const dirPath = path.resolve(await askAboutDirPath());
-	const configuration = await readConfig(dirPath);
+	const dirPath = path.resolve(await dirPathInput());
+	let configuration = await readConfig(dirPath);
+	const configurationDefault = { ignore: [] };
 
-	if (Object.keys(configuration).length < 1) {
-		await writeConfig(dirPath);
+	if (!configuration) {
+		configuration = configurationDefault;
+		if (await addConfigFileInput()) {
+			await writeConfig(dirPath, configurationDefault);
+		}
+	}
+	if (configuration === 'broken') {
+		throw new Error("Syntax Error: You have a broken config file.\
+		\n Your config file doesn't comply with TOML files standards.\
+		\n Please check it and rewrite it using the correct TOML standards.\
+		\n You can also delete it if it doesn't contain anythig important, and create a new one.\
+		\nAnd try again.");
 	}
 
+	validateConfig(configuration);
 	let outputPath;
 
 	if (flags.printOnly) {
 		outputPath = './';
 	} else {
-		outputPath = await askAboutOutputPath();
+		outputPath = await outputPathInput();
 	}
 
 	const contextFile = path.resolve(outputPath, 'context.md');

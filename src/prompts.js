@@ -1,11 +1,15 @@
-import { input, select } from '@inquirer/prompts';
+import { input, confirm } from '@inquirer/prompts';
 
-async function askAboutDirPath() {
+async function dirPathInput() {
 	return await input({ message: "Your directory path :", default: "./" });
 }
 
-async function askAboutOutputPath() {
+async function outputPathInput() {
 	return await input({ message: "Your output path :", default: "./" });
 }
 
-export { askAboutDirPath, askAboutOutputPath };
+async function addConfigFileInput() {
+	return await confirm({ message: "Do you want to add a config file :", default: false });
+}
+
+export { dirPathInput, outputPathInput, addConfigFileInput };
