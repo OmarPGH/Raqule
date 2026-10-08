@@ -31,5 +31,5 @@ export function buildPatterns(flags, configuration, scope) {
 	    return ignored;
 	}
 
-	return include(exclude(flags, configuration, scope), flags, scope);
+	return [...new Set(include(exclude(flags, configuration, scope), flags, scope))];
 }

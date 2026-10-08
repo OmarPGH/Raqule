@@ -1,8 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { getSpecialFileHandler } from './specialFiles.js';
-import { isIgnored } from './helpers/ignore.js';
-import { buildPatterns } from './ignore/patterns.js';
+import { IgnoreResolver } from './ignore/resolver.js';
 
 const BINARY_EXTENSIONS = new Set([
 	'png', 'jpg', 'jpeg', 'gif', 'webp', 'ico', 'bmp', 'svg',
@@ -16,9 +15,7 @@ async function gather(dirPath, flags, configuration, rootDirPath = dirPath, curr
 	if (currentDepth > flags.depth) return {};
 	
 	let dirFiles = await fs.promises.readdir(dirPath);
-    let ignored = buildPatterns(flags, configuration, 'content');
-
-	ignored = [...new Set(ignored)];
+    let ignored = new IgnoreResolver(flags, configuration, 'content');
 
 	const result = {};
 	for (let i = 0; i < dirFiles.length; i++) {
@@ -26,7 +23,7 @@ async function gather(dirPath, flags, configuration, rootDirPath = dirPath, curr
 		const filePath = path.join(dirPath, fileName);
 		const relativePath = path.relative(rootDirPath, filePath).split(path.sep).join('/');
 
-		if (isIgnored(relativePath, fileName, ignored)) continue;
+		if (ignored.isIgnored(relativePath, fileName)) continue;
 
 		if ((await fs.promises.stat(filePath)).isDirectory()) {
 			result[fileName] = {
