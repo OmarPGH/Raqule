@@ -1,3 +1,4 @@
+import mm from 'micromatch';
 import { defaultIgnoreList } from './defaultList.js';
 
 export function buildPatterns(flags, configuration, scope) {
@@ -22,10 +23,19 @@ export function buildPatterns(flags, configuration, scope) {
 
 	function include(ignored, flags, scope) {
 	    if (flags.include) {
-	        ignored = ignored.filter(ele => !flags.include.includes(ele));
+	        ignored = ignored.filter(
+	            pattern => !flags.include.some(
+	                includePattern => mm.isMatch(pattern, includePattern)
+	            )
+	        );
 	    }
+
 	    if (flags[`${scope}Include`]) {
-	        ignored = ignored.filter(ele => !flags[`${scope}Include`].includes(ele));
+	        ignored = ignored.filter(
+	            pattern => !flags[`${scope}Include`].some(
+	                includePattern => mm.isMatch(pattern, includePattern)
+	            )
+	        );
 	    }
 
 	    return ignored;
