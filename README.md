@@ -8,7 +8,7 @@
 
 ![language](https://img.shields.io/badge/Language-JavaScript%20ES20Module-yellow)
 
-![raqule downloads](https://img.shields.io/github/downloads/OmarPGH/Raqule/total?color=red&label=Raqule%20Downloads)
+![raqule downloads](https://img.shields.io/github/downloads/OmarPGH/Raqule/total?color=blueviolet&label=Raqule%20Downloads)
 
 ---
 
