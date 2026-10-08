@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { exclude, include, isIgnored } from './helpers/ignore.js';
+import { isIgnored } from './helpers/ignore.js';
+import { buildPatterns } from './ignore/patterns.js';
 
 async function generateTree(dirPath, flags, configuration) {
     async function generateTreeProcess(dirPath, indent = '', rootDirPath = dirPath, currentDepth = 1) {
@@ -12,10 +13,8 @@ async function generateTree(dirPath, flags, configuration) {
         }
 
         let items = await fs.promises.readdir(dirPath, { withFileTypes: true });
-        let ignored = [];
+        let ignored = buildPatterns(flags, configuration, 'tree');
         
-        ignored = exclude(ignored, flags, configuration, 'tree');
-        ignored = include(ignored, flags, 'tree');
         ignored = [...new Set(ignored)];
 
         for (let i = 0; i < items.length; i++) {
