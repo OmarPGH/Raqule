@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { IgnoreResolver } from './ignore/resolver.js';
+import { IgnoreResolver } from './ignore/index.js';
 
-async function generateTree(dirPath, flags, configuration) {
-    async function generateTreeProcess(dirPath, indent = '', rootDirPath = dirPath, currentDepth = 1) {
+async function generateTree(dirPath, flags, configuration, rootDirPath = dirPath) {
+    async function generateTreeProcess(dirPath, indent = '', currentDepth = 1) {
         let treeStr = '';
 
         if (!indent) {
@@ -12,7 +12,6 @@ async function generateTree(dirPath, flags, configuration) {
         }
 
         let items = await fs.promises.readdir(dirPath, { withFileTypes: true });
-        let ignored = new IgnoreResolver(flags, configuration, 'tree');
         
         for (let i = 0; i < items.length; i++) {
             const item = items[i];
@@ -29,13 +28,15 @@ async function generateTree(dirPath, flags, configuration) {
 
                 if (!ignored.isIgnored(relativePath, item.name)) {
                     const nextIndent = indent + (isLast ? '    ' : '│   ');
-                    treeStr += await generateTreeProcess(subPath, nextIndent, rootDirPath, currentDepth + 1);
+                    treeStr += await generateTreeProcess(subPath, nextIndent, currentDepth + 1);
                 }
             }
         }
         return treeStr;
     }
 
+    let ignored = new IgnoreResolver(flags, configuration, 'tree');
+   
     return await generateTreeProcess(dirPath);
 }
 

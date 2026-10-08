@@ -1,0 +1,1 @@
+export { IgnoreResolver } from './resolver.js';
