@@ -2,13 +2,13 @@
 
 ### A smart code gatherer for LLMs & AI
 
-![latest release](https://img.shields.io/github/v/tag/OmarPGH/Raqule?sort=semver&label=Latest%20Release&color=brightgreen)
+![latest release](https://img.shields.io/github/v/tag/OmarPGH/Raqule?sort=semver&label=Latest%20Release&color=%2300C853)
 
-![license](https://img.shields.io/github/license/OmarPGH/Raqule?label=License&color=blue)
+![license](https://img.shields.io/github/license/OmarPGH/Raqule?label=License&color=%2300A8FF)
 
-![language](https://img.shields.io/badge/Language-JavaScript%20ES20Module-yellow)
+![language](https://img.shields.io/badge/Language-JavaScript%20ES20Module-%23EAB308)
 
-![raqule downloads](https://img.shields.io/github/downloads/OmarPGH/Raqule/total?color=blueviolet&label=Raqule%20Downloads)
+![raqule downloads](https://img.shields.io/github/downloads/OmarPGH/Raqule/total?color=%23AA00FF&label=Raqule%20Downloads)
 
 ---
 
