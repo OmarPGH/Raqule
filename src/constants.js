@@ -1,0 +1,1 @@
+export const outputFileName = "raqule-output.md";

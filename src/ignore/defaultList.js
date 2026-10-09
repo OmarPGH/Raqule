@@ -1,3 +1,5 @@
+import { outputFileName } from '../constants.js';
+
 const defaultIgnoreList = [
 	// Version control
 	'.git',
@@ -94,6 +96,9 @@ const defaultIgnoreList = [
 	'*.swp',
 	'*.swo',
 	'*~',
+
+	// Raqule
+	outputFileName
 ];
 
 export { defaultIgnoreList };

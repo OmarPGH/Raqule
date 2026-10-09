@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { getSpecialFileHandler } from './specialFiles.js';
+import { specialFileHandler } from './specialFiles.js';
 import { IgnoreResolver } from './ignore/index.js';
 
 const BINARY_EXTENSIONS = new Set([
@@ -15,30 +15,31 @@ async function gather(dirPath, flags, configuration, rootDirPath = dirPath) {
 	async function gatherProcess(dirPath, currentDepth = 1) {
 		if (currentDepth > flags.depth) return {};
 		
-		let dirFiles = await fs.promises.readdir(dirPath);
+        let items = await fs.promises.readdir(dirPath, { withFileTypes: true });
 		const result = {};
 
-		for (let i = 0; i < dirFiles.length; i++) {
-			const fileName = dirFiles[i];
-			const filePath = path.join(dirPath, fileName);
-			const relativePath = path.relative(rootDirPath, filePath).split(path.sep).join('/');
+		for (let i = 0; i < items.length; i++) {
+			const item = items[i];
+			const itemName = item.name;
+			const itemPath = path.join(dirPath, itemName);
+			const relativePath = path.relative(rootDirPath, itemPath).split(path.sep).join('/');
 
-			if (ignored.isIgnored(relativePath, fileName)) continue;
+			if (ignored.isIgnored(relativePath, itemName)) continue;
 
-			if ((await fs.promises.stat(filePath)).isDirectory()) {
-				result[fileName] = {
+			if (item.isDirectory()) {
+				result[itemName] = {
 					isFolder: true,
-					children: await gatherProcess(filePath, currentDepth + 1),
+					children: await gatherProcess(itemPath, currentDepth + 1),
 				};
 				continue;
 			}
 
-			const extension = path.extname(fileName).slice(1);
+			const extension = path.extname(itemName).slice(1);
 
 			if (BINARY_EXTENSIONS.has(extension.toLowerCase())) {
-				result[fileName] = {
+				result[itemName] = {
 					isFolder: false,
-					path: filePath,
+					path: itemPath,
 					relativePath: relativePath,
 					content: '[Binary file skipped]',
 					extension,
@@ -46,18 +47,18 @@ async function gather(dirPath, flags, configuration, rootDirPath = dirPath) {
 				continue;
 			}
 
-			let fileContent = await fs.promises.readFile(filePath, 'utf8');
+			let itemContent = await fs.promises.readFile(itemPath, 'utf8');
 
-			const specialHandler = getSpecialFileHandler(fileName);
+			const specialHandler = specialFileHandler(itemName);
 			if (specialHandler) {
-				fileContent = specialHandler(fileContent);
+				itemContent = specialHandler(itemContent);
 			}
 
-			result[fileName] = {
+			result[itemName] = {
 				isFolder: false,
-				path: filePath,
+				path: itemPath,
 				relativePath: relativePath,
-				content: fileContent,
+				content: itemContent,
 				extension,
 			};
 		}

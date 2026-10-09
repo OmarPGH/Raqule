@@ -1,13 +1,11 @@
 const LICENSE_PREVIEW_LINES = 3;
 
-const specialFileHandlers = {
-	license: (content) => content.split('\n').slice(0, LICENSE_PREVIEW_LINES).join('\n'),
-};
-
-function getSpecialFileHandler(fileName) {
+export function specialFileHandler(fileName) {
 	const parts = fileName.split('.');
-	const baseName = (parts[0] || parts[1] || '').toLowerCase();
-	return specialFileHandlers[baseName];
-}
+	const baseName = parts[0] || '';
+	const extension = parts[1] || '';
 
-export { getSpecialFileHandler };
+	if (baseName.toLowerCase() === 'license' && ['', 'md', 'txt'].includes(extension)) {
+		return (content) => content.split('\n').slice(0, LICENSE_PREVIEW_LINES).join('\n');
+	}
+}

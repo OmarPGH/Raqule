@@ -15,18 +15,19 @@ async function generateTree(dirPath, flags, configuration, rootDirPath = dirPath
         
         for (let i = 0; i < items.length; i++) {
             const item = items[i];
+            const itemName = item.name;
 
             const isLast = i === items.length - 1;
             const pointer = isLast ? '└── ' : '├── ';
 
             const suffix = item.isDirectory() ? '/' : '';
-            treeStr += `${indent}${pointer}${item.name}${suffix}\n`;
+            treeStr += `${indent}${pointer}${itemName}${suffix}\n`;
 
             if (item.isDirectory() && currentDepth < flags.depth) {
-                const subPath = path.join(dirPath, item.name);
+                const subPath = path.join(dirPath, itemName);
                 const relativePath = path.relative(rootDirPath, subPath).split(path.sep).join('/');
 
-                if (!ignored.isIgnored(relativePath, item.name)) {
+                if (!ignored.isIgnored(relativePath, itemName)) {
                     const nextIndent = indent + (isLast ? '    ' : '│   ');
                     treeStr += await generateTreeProcess(subPath, nextIndent, currentDepth + 1);
                 }

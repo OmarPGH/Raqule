@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { outputFileName } from './constants.js';
 import { dirPathInput, outputPathInput, addConfigFileInput } from './prompts.js';
 import { gather } from './gather.js';
 import { generateTree } from './tree.js';
@@ -37,7 +38,7 @@ async function main() {
 		outputPath = await outputPathInput();
 	}
 
-	const contextFile = path.resolve(outputPath, 'context.md');
+	const outputFile = path.resolve(outputPath, outputFileName);
 	const treeStr = await generateTree(dirPath, flags, configuration);
 	const formattedTree = formatTree(treeStr);
 
@@ -50,8 +51,8 @@ async function main() {
 	}
 
 	if (!flags.printOnly) {
-		await write(finalContent, contextFile);
-		console.log(`You'll find context.md file at [ ${path.join(outputPath, 'context.md')} | ${contextFile} ]`);
+		await write(finalContent, outputFile);
+		console.log(`You'll find ${outputFileName} file at [ ${path.join(outputPath, outputFileName)} | ${outputFile} ]`);
 	}
 
 	if (flags.tokens) {
