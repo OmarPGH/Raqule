@@ -1,8 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { defaultIgnoreList } from './ignoreList.js';
 import { getSpecialFileHandler } from './specialFiles.js';
-import { exclude, include, isIgnored } from './helpers/ignore.js';
+import { IgnoreResolver } from './ignore/index.js';
 
 const BINARY_EXTENSIONS = new Set([
 	'png', 'jpg', 'jpeg', 'gif', 'webp', 'ico', 'bmp', 'svg',
@@ -12,62 +11,63 @@ const BINARY_EXTENSIONS = new Set([
 	'exe', 'dll', 'so', 'bin', 'class', 'wasm',
 ]);
 
-async function gather(dirPath, flags, configuration, rootDirPath = dirPath, currentDepth = 1) {
-	if (currentDepth > flags.depth) return {};
-	
-	let dirFiles = await fs.promises.readdir(dirPath);
-    let ignored = [];
+async function gather(dirPath, flags, configuration, rootDirPath = dirPath) {
+	async function gatherProcess(dirPath, currentDepth = 1) {
+		if (currentDepth > flags.depth) return {};
+		
+		let dirFiles = await fs.promises.readdir(dirPath);
+		const result = {};
 
-    ignored = exclude(ignored, flags, configuration, 'content');
-    ignored = include(ignored, flags, 'content');
-	ignored = [...new Set(ignored)];
+		for (let i = 0; i < dirFiles.length; i++) {
+			const fileName = dirFiles[i];
+			const filePath = path.join(dirPath, fileName);
+			const relativePath = path.relative(rootDirPath, filePath).split(path.sep).join('/');
 
-	const result = {};
-	for (let i = 0; i < dirFiles.length; i++) {
-		const fileName = dirFiles[i];
-		const filePath = path.join(dirPath, fileName);
-		const relativePath = path.relative(rootDirPath, filePath).split(path.sep).join('/');
+			if (ignored.isIgnored(relativePath, fileName)) continue;
 
-		if (isIgnored(relativePath, fileName, ignored)) continue;
+			if ((await fs.promises.stat(filePath)).isDirectory()) {
+				result[fileName] = {
+					isFolder: true,
+					children: await gatherProcess(filePath, currentDepth + 1),
+				};
+				continue;
+			}
 
-		if ((await fs.promises.stat(filePath)).isDirectory()) {
-			result[fileName] = {
-				isFolder: true,
-				children: await gather(filePath, flags, configuration, rootDirPath, currentDepth + 1),
-			};
-			continue;
-		}
+			const extension = path.extname(fileName).slice(1);
 
-		const extension = path.extname(fileName).slice(1);
+			if (BINARY_EXTENSIONS.has(extension.toLowerCase())) {
+				result[fileName] = {
+					isFolder: false,
+					path: filePath,
+					relativePath: relativePath,
+					content: '[Binary file skipped]',
+					extension,
+				};
+				continue;
+			}
 
-		if (BINARY_EXTENSIONS.has(extension.toLowerCase())) {
+			let fileContent = await fs.promises.readFile(filePath, 'utf8');
+
+			const specialHandler = getSpecialFileHandler(fileName);
+			if (specialHandler) {
+				fileContent = specialHandler(fileContent);
+			}
+
 			result[fileName] = {
 				isFolder: false,
 				path: filePath,
 				relativePath: relativePath,
-				content: '[Binary file skipped]',
+				content: fileContent,
 				extension,
 			};
-			continue;
 		}
 
-		let fileContent = await fs.promises.readFile(filePath, 'utf8');
-
-		const specialHandler = getSpecialFileHandler(fileName);
-		if (specialHandler) {
-			fileContent = specialHandler(fileContent);
-		}
-
-		result[fileName] = {
-			isFolder: false,
-			path: filePath,
-			relativePath: relativePath,
-			content: fileContent,
-			extension,
-		};
+		return result;
 	}
 
-	return result;
+	let ignored = new IgnoreResolver(flags, configuration, 'content');
+	
+	return await gatherProcess(dirPath);
 }
 
 export { gather };

@@ -26,7 +26,7 @@ const defaultIgnoreList = [
 	'yarn-error.log*',
 
 	// Secrets / Credentials
-	'**.env!(.example|.sample)*',
+	'.env!(.example|.sample)*',
 	'.npmrc',
 	'.pypirc',
 	'.netrc',
