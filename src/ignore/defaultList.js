@@ -67,7 +67,6 @@ const defaultIgnoreList = [
 	'vendor',
 
 	// .NET
-	'bin',
 	'obj',
 	'*.user',
 

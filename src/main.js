@@ -1,4 +1,5 @@
 import path from 'node:path';
+import fs from 'node:fs';
 import { outputFileName } from './constants.js';
 import { dirPathInput, outputPathInput, addConfigFileInput } from './prompts.js';
 import { gather } from './gather.js';
@@ -12,6 +13,19 @@ import { countTokens } from './tokens.js';
 async function main() {
 	const flags = await readFlags();
 	const dirPath = path.resolve(await dirPathInput());
+
+    try {
+        const stat = await fs.promises.stat(dirPath);
+        if (!stat.isDirectory()) {
+            throw new Error(`"${dirPath}"\n\nexists but isn't a directory.`);
+        }
+    } catch (err) {
+        if (err.code === 'ENOENT') {
+            throw new Error(`Directory not found:\n\n"${dirPath}".\n\nPlease check the path and try again.`);
+        }
+        throw err;
+    }
+
 	let configuration = await readConfig(dirPath);
 	const configurationDefault = { ignore: [] };
 
