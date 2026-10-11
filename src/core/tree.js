@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { IgnoreResolver } from './ignore/index.js';
+import { IgnoreResolver } from '../ignore/index.js';
 
 async function generateTree(dirPath, flags, configuration, rootDirPath = dirPath) {
     async function generateTreeProcess(dirPath, indent = '', currentDepth = 1) {

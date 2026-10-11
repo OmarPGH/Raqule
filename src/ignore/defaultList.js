@@ -1,4 +1,4 @@
-import { outputFileName } from '../constants.js';
+import { outputFileName } from '../shared/constants.js';
 
 const defaultIgnoreList = [
 	// Version control

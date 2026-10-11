@@ -1,14 +1,8 @@
 import path from 'node:path';
 import fs from 'node:fs';
-import { outputFileName } from './constants.js';
-import { dirPathInput, outputPathInput, addConfigFileInput } from './prompts.js';
-import { gather } from './gather.js';
-import { generateTree } from './tree.js';
-import { formatTree, formatFiles, formatFinal } from './format.js';
-import { write } from './write.js';
-import { readFlags } from './flags.js';
-import { readConfig, writeConfig, validateConfig } from './config.js';
-import { countTokens } from './tokens.js';
+import { outputFileName, write, countTokens, formatTree, formatFiles, formatFinal } from './shared/index.js';
+import { readFlags, dirPathInput, outputPathInput, addConfigFileInput, readConfig, writeConfig, validateConfig } from './input/index.js';
+import { gather, generateTree } from './core/index.js';
 
 async function main() {
 	const flags = await readFlags();

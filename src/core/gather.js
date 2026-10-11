@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { specialFileHandler } from './specialFiles.js';
-import { IgnoreResolver } from './ignore/index.js';
+import { specialFileHandler } from '../shared/specialFiles.js';
+import { IgnoreResolver } from '../ignore/index.js';
 
 const BINARY_EXTENSIONS = new Set([
 	'png', 'jpg', 'jpeg', 'gif', 'webp', 'ico', 'bmp', 'svg',
