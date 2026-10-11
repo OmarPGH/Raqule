@@ -67,7 +67,7 @@ jobs:
           echo "prev_tag=${PREV_TAG}" >> "$GITHUB_OUTPUT"
 
           if [ -z "$PREV_TAG" ]; then
-            echo "✅ First tag in this channel — nothing to compare against."
+            echo "First tag in this channel — nothing to compare against."
             exit 0
           fi
 
@@ -78,7 +78,7 @@ jobs:
             exit 1
           fi
 
-          echo "✅ Found ${COMMIT_COUNT} new commit(s) since ${PREV_TAG}."
+          echo "Found ${COMMIT_COUNT} new commit(s) since ${PREV_TAG}."
 
   build:
     name: Build ${{ matrix.target }}
@@ -208,11 +208,31 @@ jobs:
           echo "Testing ${BINARY_NAME}"
           "./dist/${BINARY_NAME}" --version
 
-      - name: Upload binary artifact
+      - name: Package release zip (binary + README)
+        id: package
+        shell: bash
+        env:
+          BINARY_NAME: ${{ steps.binary.outputs.name }}
+          VERSION: ${{ github.ref_name }}
+        run: |
+          ZIP_NAME="Raqule-${VERSION}-${{ matrix.os }}-${{ matrix.arch }}-release.zip"
+
+          mkdir -p package
+          cp "dist/${BINARY_NAME}" "package/${BINARY_NAME}"
+          cp README.md "package/README.md"
+
+          cd package
+          zip -X "../dist/${ZIP_NAME}" "${BINARY_NAME}" "README.md"
+          cd ..
+
+          echo "name=${ZIP_NAME}" >> "$GITHUB_OUTPUT"
+          echo "Packaged: ${ZIP_NAME}"
+
+      - name: Upload release zip artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: ${{ matrix.target }}
-          path: dist/${{ steps.binary.outputs.name }}
+          path: dist/${{ steps.package.outputs.name }}
           if-no-files-found: error
 
   release:
@@ -266,7 +286,7 @@ jobs:
             echo "" >> RELEASE_NOTES.md
             echo "**Full diff**: https://github.com/${REPO}/compare/${PREV_TAG}...${VERSION}" >> RELEASE_NOTES.md
           else
-            echo "- Initial release 🎉" >> RELEASE_NOTES.md
+            echo "- Initial release" >> RELEASE_NOTES.md
           fi
 
           echo "" >> RELEASE_NOTES.md
@@ -275,13 +295,14 @@ jobs:
           cat >> RELEASE_NOTES.md <<EOF
           # Raqule ${VERSION}
 
-          Standalone executables for Linux, macOS, and Windows.
+          Each download is a zip containing the standalone executable and the project's README.md.
 
           ## Linux
 
           ### Linux x64
 
           \`\`\`bash
+          unzip Raqule-${VERSION}-linux-x64-release.zip
           chmod +x Raqule-${VERSION}-linux-x64
           ./Raqule-${VERSION}-linux-x64
           \`\`\`
@@ -289,6 +310,7 @@ jobs:
           ### Linux ARM64
 
           \`\`\`bash
+          unzip Raqule-${VERSION}-linux-arm64-release.zip
           chmod +x Raqule-${VERSION}-linux-arm64
           ./Raqule-${VERSION}-linux-arm64
           \`\`\`
@@ -298,6 +320,7 @@ jobs:
           ### Apple Silicon ARM64
 
           \`\`\`bash
+          unzip Raqule-${VERSION}-macos-arm64-release.zip
           chmod +x Raqule-${VERSION}-macos-arm64
           ./Raqule-${VERSION}-macos-arm64
           \`\`\`
@@ -309,6 +332,7 @@ jobs:
           PowerShell:
 
           \`\`\`powershell
+          Expand-Archive Raqule-${VERSION}-win-x64-release.zip
           .\\Raqule-${VERSION}-win-x64.exe
           \`\`\`
 
@@ -323,6 +347,7 @@ jobs:
           PowerShell:
 
           \`\`\`powershell
+          Expand-Archive Raqule-${VERSION}-win-arm64-release.zip
           .\\Raqule-${VERSION}-win-arm64.exe
           \`\`\`
 
@@ -334,7 +359,7 @@ jobs:
 
           ## Checksums
 
-          SHA-256 checksums are available in:
+          SHA-256 checksums (of the zip files) are available in:
 
           \`\`\`text
           SHA256SUMS
