@@ -4,7 +4,7 @@
   "description": "A code gatherer, specially designed for LLMs/AI like (ChatGPT, Claude, Gemini) to provide for them whole project context/codes in a single file.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test"
   },
   "bin": {
     "rql": "./bin/cli.js"
