@@ -44,6 +44,17 @@ async function main() {
 		outputPath = './';
 	} else {
 		outputPath = await outputPathInput();
+		try {
+	        const stat = await fs.promises.stat(outputPath);
+	        if (!stat.isDirectory()) {
+	            throw new Error(`"${outputPath}"\n\nexists but isn't a directory.`);
+	        }
+	    } catch (err) {
+	        if (err.code === 'ENOENT') {
+	            throw new Error(`Directory not found:\n\n"${outputPath}".\n\nPlease check the path and try again.`);
+	        }
+	        throw err;
+	    }
 	}
 
 	const outputFile = path.resolve(outputPath, outputFileName);
