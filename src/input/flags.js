@@ -21,7 +21,7 @@ async function readFlags() {
     program
         .description(packageInfo.description)
         .version(packageInfo.version)
-        .option('-a, --all', 'Do not apply the default ignore list (e.g. .git, node_modules, target). Not recommended')
+        .option('-a, --all', "Don't apply the default ignore list (e.g. .git, .env, node_modules, target). Not recommended & Unsafe")
         .option('-d, --depth <number>', 'Set the maximum folder depth (whole number, 1 or greater)', parseDepth, Infinity)
         .option('-e, --exclude <names...>', 'Skip these names in the contents, and do not expand them in the tree')
         .option('--ce, --content-exclude <names...>', 'Skip these names in the contents only')
