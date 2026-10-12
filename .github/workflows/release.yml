@@ -35,6 +35,16 @@ jobs:
             exit 1
           fi
 
+      - name: Verify tag format
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Tag '${TAG}' does not match the expected format vX.Y.Z or vX.Y.Z-prerelease (semver)."
+            exit 1
+          fi
+
       - name: Verify tag matches package.json version
         shell: bash
         run: |
@@ -79,6 +89,92 @@ jobs:
           fi
 
           echo "Found ${COMMIT_COUNT} new commit(s) since ${PREV_TAG}."
+
+      - name: Verify tag is newer than the latest existing tag
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+
+          # Compares two semver tags (vX.Y.Z or vX.Y.Z-prerelease.N).
+          # Echoes "greater", "less", or "equal" for tag_a relative to tag_b.
+          # A final release is always considered greater than any
+          # prerelease that shares the same X.Y.Z core.
+          compare_tags() {
+            local tag_a="$1"
+            local tag_b="$2"
+
+            if [ "$tag_a" = "$tag_b" ]; then
+              echo "equal"
+              return
+            fi
+
+            local core_a="${tag_a#v}"; core_a="${core_a%%-*}"
+            local core_b="${tag_b#v}"; core_b="${core_b%%-*}"
+
+            local pre_a="" pre_b=""
+            [[ "$tag_a" == *-* ]] && pre_a="${tag_a#*-}"
+            [[ "$tag_b" == *-* ]] && pre_b="${tag_b#*-}"
+
+            if [ "$core_a" != "$core_b" ]; then
+              local ordered
+              ordered=$(printf '%s\n%s\n' "$core_a" "$core_b" | sort -V | tail -1)
+              [ "$ordered" = "$core_a" ] && echo "greater" || echo "less"
+              return
+            fi
+
+            if [ -z "$pre_a" ] && [ -n "$pre_b" ]; then
+              echo "greater"
+            elif [ -n "$pre_a" ] && [ -z "$pre_b" ]; then
+              echo "less"
+            elif [ -z "$pre_a" ] && [ -z "$pre_b" ]; then
+              echo "equal"
+            else
+              local ordered
+              ordered=$(printf '%s\n%s\n' "$pre_a" "$pre_b" | sort -V | tail -1)
+              [ "$ordered" = "$pre_a" ] && echo "greater" || echo "less"
+            fi
+          }
+
+          # Finds the true semver-latest among the given tags, using
+          # compare_tags above as the comparator. `sort -V` / `git tag
+          # --sort=-v:refname` both rank a prerelease ABOVE its own
+          # final release (e.g. v1.0.0-beta.1 > v1.0.0), which is
+          # backwards for semver — so we fold over the tags ourselves
+          # instead of trusting their sort order.
+          find_latest() {
+            local latest=""
+            for t in "$@"; do
+              if [ -z "$latest" ]; then
+                latest="$t"
+                continue
+              fi
+              if [ "$(compare_tags "$t" "$latest")" = "greater" ]; then
+                latest="$t"
+              fi
+            done
+            echo "$latest"
+          }
+
+          # Latest tag across the whole repo, regardless of channel
+          # (stable or prerelease) — not scoped like PREV_TAG above,
+          # so a vX.Y.Z-beta.N can't sneak in after vX.Y.Z already shipped.
+          OTHER_TAGS=$(git tag --list 'v*' | grep -v "^${TAG}$" || echo "")
+
+          if [ -z "$OTHER_TAGS" ]; then
+            echo "No other tags in the repo yet — nothing to compare against."
+            exit 0
+          fi
+
+          LATEST_TAG=$(find_latest $OTHER_TAGS)
+
+          RESULT=$(compare_tags "$TAG" "$LATEST_TAG")
+
+          if [ "$RESULT" != "greater" ]; then
+            echo "::error::Tag ${TAG} is not newer than the latest existing tag ${LATEST_TAG}. New tags must have a higher version."
+            exit 1
+          fi
+
+          echo "Tag ${TAG} is newer than the latest existing tag ${LATEST_TAG}. ✓"
 
   build:
     name: Build ${{ matrix.target }}
