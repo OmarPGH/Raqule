@@ -3,12 +3,7 @@
 Here is a glimpse of what's currently in progress and planned for upcoming releases.
 
 ## 🎯 Next Release
-* Better error management
-* Fixing logical bugs
-* Improving the project architecture
-* Refactoring the ignoring system
-* Performance improvement
-* First stable 0.X release (0.1.0)
+* Not Planned Yet
 ---
 
 ## 💡 Future Ideas & Backlog
