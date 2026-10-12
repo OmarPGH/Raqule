@@ -318,7 +318,7 @@ jobs:
           cp README.md "package/README.md"
 
           cd package
-          zip -X "../dist/${ZIP_NAME}" "${BINARY_NAME}" "README.md"
+          zip -9 -X "../dist/${ZIP_NAME}" "${BINARY_NAME}" "README.md"
           cd ..
 
           echo "name=${ZIP_NAME}" >> "$GITHUB_OUTPUT"
