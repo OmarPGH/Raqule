@@ -318,7 +318,20 @@ jobs:
           cp README.md "package/README.md"
 
           cd package
-          zip -9 -X "../dist/${ZIP_NAME}" "${BINARY_NAME}" "README.md"
+
+          if [ "${{ matrix.os }}" = "win" ]; then
+            # GitHub-hosted Windows runners don't ship a `zip` binary
+            # (confirmed against the official runner-images docs), but
+            # 7-Zip ships preinstalled on every Windows image as `7z`.
+            # `-tzip` forces standard .zip output (7z's native format
+            # is otherwise .7z) so the result is a normal, universally
+            # openable zip file — `-mx=9` matches the `-9` max
+            # compression level used on Unix below.
+            7z a -tzip -mx=9 "../dist/${ZIP_NAME}" "${BINARY_NAME}" "README.md"
+          else
+            zip -9 -X "../dist/${ZIP_NAME}" "${BINARY_NAME}" "README.md"
+          fi
+
           cd ..
 
           echo "name=${ZIP_NAME}" >> "$GITHUB_OUTPUT"
