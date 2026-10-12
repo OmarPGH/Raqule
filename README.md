@@ -172,7 +172,7 @@ rql --version
 
 ## 🛠️ Building from Source (Developers)
 
-If you prefer installing from source code using Node.js & NPM (a recent Node.js version is required, the release binaries are built with Node.js 26):
+If you prefer installing from source code using Node.js & NPM (Node.js 22 or later is required; the release binaries themselves are built with Node.js 26):
 ```bash
 # Clone repository
 git clone https://github.com/OmarPGH/Raqule.git
