@@ -1,6 +1,6 @@
 import path from 'node:path';
 import fs from 'node:fs';
-import { outputFileName, write, countTokens, formatTree, formatFiles, formatFinal } from './shared/index.js';
+import { outputFileName, write, clipboardWrite, countTokens, formatTree, formatFiles, formatFinal } from './shared/index.js';
 import { readFlags, dirPathInput, outputPathInput, addConfigFileInput, readConfig, writeConfig, validateConfig } from './input/index.js';
 import { gather, generateTree } from './core/index.js';
 
@@ -67,6 +67,10 @@ async function main() {
 		const filesTree = await gather(dirPath, flags, configuration);
 		const formattedFiles = formatFiles(filesTree);
 		finalContent = formatFinal(formattedTree, formattedFiles);
+	}
+
+	if (flags.copy) {
+		await clipboardWrite(finalContent);
 	}
 
 	if (!flags.printOnly) {

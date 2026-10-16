@@ -71,6 +71,8 @@
 
 * **[Zod](https://www.npmjs.com/package/zod)** - Schema validation for configuration parameters
 
+* **[Clipboardy](https://www.npmjs.com/package/clipboardy)** - Cross-platform terminal & Node.js clipboard interface
+
 * **Node.js Native Modules** (`fs`, `path`)
 
 ---
@@ -190,6 +192,7 @@ npm link
 | Flag | Description |
 | :--- | :--- |
 | `-a, --all` | Don't apply the *default ignore list* (e.g. .git, **.env**, node_modules, target). **Not recommended & Unsafe** |
+| `-c, --copy` | Copy the result/output to your clipboard |
 | `-d, --depth <number>` | Set the maximum folder depth (whole number, 1 or greater) |
 | `-e, --exclude <names...>` | Skip these names in the contents, and do not expand them in the tree |
 | `--ce, --content-exclude <names...>` | Skip these names in the contents only |

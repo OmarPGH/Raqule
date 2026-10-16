@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { specialFileHandler } from '../shared/specialFiles.js';
+import { specialFileHandler } from '../shared/index.js';
 import { IgnoreResolver } from '../ignore/index.js';
 
 const BINARY_EXTENSIONS = new Set([
