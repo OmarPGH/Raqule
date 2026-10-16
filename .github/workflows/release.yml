@@ -274,6 +274,7 @@ jobs:
               main: path.resolve("build/raqule.mjs"),
               mainFormat: "module",
               output: path.resolve("dist", process.env.BINARY_NAME),
+              useVfs: true,
               useSnapshot: false,
               useCodeCache: false,
               disableExperimentalSEAWarning: true
