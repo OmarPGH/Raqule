@@ -242,9 +242,9 @@ jobs:
             bin/cli.js \
             --bundle \
             --platform=node \
-            --format=cjs \
+            --format=esm \
             --target=node26 \
-            --outfile=build/raqule.cjs
+            --outfile=build/raqule.mjs
 
       - name: Create binary name
         id: binary
@@ -271,8 +271,8 @@ jobs:
             const path = require("node:path");
 
             const config = {
-              main: path.resolve("build/raqule.cjs"),
-              mainFormat: "commonjs",
+              main: path.resolve("build/raqule.mjs"),
+              mainFormat: "module",
               output: path.resolve("dist", process.env.BINARY_NAME),
               useSnapshot: false,
               useCodeCache: false,
