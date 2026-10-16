@@ -302,27 +302,37 @@ Raqule
 ├── README.md
 ├── ROADMAP.md
 ├── bin/
+│   └── cli.js
 ├── node_modules/
 ├── package-lock.json
 ├── package.json
 ├── raqule-config.toml
-└── src/
-    ├── config.js
-    ├── flags.js
-    ├── format.js
-    ├── gather.js
-    ├── ignore/
-    │   ├── defaultList.js
-    │   ├── index.js
-    │   ├── patterns.js
-    │   └── resolver.js
-    ├── main.js
-    ├── packageInfo.js
-    ├── prompts.js
-    ├── specialFiles.js
-    ├── tokens.js
-    ├── tree.js
-    └── write.js
+├── src/
+│   ├── core/
+│   │   ├── gather.js
+│   │   ├── index.js
+│   │   └── tree.js
+│   ├── ignore/
+│   │   ├── defaultList.js
+│   │   ├── index.js
+│   │   ├── patterns.js
+│   │   └── resolver.js
+│   ├── input/
+│   │   ├── config.js
+│   │   ├── flags.js
+│   │   ├── index.js
+│   │   └── prompts.js
+│   ├── main.js
+│   └── shared/
+│       ├── constants.js
+│       ├── format.js
+│       ├── index.js
+│       ├── packageInfo.js
+│       ├── specialFiles.js
+│       ├── tokens.js
+│       └── write.js
+└── test/
+    └── resolver.test.js
 ```
 
 > **Note:** `raqule-config.toml` is only created if you say yes to the prompt on first run inside a project — see [Project Config File](#%EF%B8%8F-project-config-file).
