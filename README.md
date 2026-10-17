@@ -327,6 +327,7 @@ Raqule
 │   │   └── prompts.js
 │   ├── main.js
 │   └── shared/
+│       ├── clipboard.js
 │       ├── constants.js
 │       ├── format.js
 │       ├── index.js
