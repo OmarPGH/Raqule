@@ -73,19 +73,19 @@ async function main() {
 		await clipboardWrite(finalContent);
 	}
 
-	if (!flags.printOnly) {
-		await write(finalContent, outputFile);
-		console.log(`You'll find ${outputFileName} file at [ ${path.join(outputPath, outputFileName)} | ${outputFile} ]`);
+    if (flags.print || flags.printOnly) {
+		console.log(finalContent);
+		console.log('The Result is Above')
 	}
 
-	if (flags.tokens) {
+    if (flags.tokens) {
 		const totalTokens = countTokens(finalContent);
 		console.log(`\nEstimated Total Tokens: ${totalTokens.toLocaleString()}`)
-	}
+    }
 
-	if (flags.print || flags.printOnly) {
-		console.log('\n\n The result:')
-		console.log(`\n\n${finalContent}`);
+	if (!flags.printOnly) {
+		await write(finalContent, outputFile);
+		console.log(`\nYou'll find ${outputFileName} file at [ ${path.join(outputPath, outputFileName)} | ${outputFile} ]`);
 	}
 }
 
