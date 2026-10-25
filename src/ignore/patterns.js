@@ -1,5 +1,5 @@
 import mm from 'micromatch';
-import { defaultIgnoreList } from './defaultList.js';
+import { flatDefaultIgnoreList } from './defaultList.js';
 
 export function buildPatterns(flags, configuration, scope) {
 	function exclude(flags, configuration, scope) {
@@ -9,7 +9,7 @@ export function buildPatterns(flags, configuration, scope) {
 			ignored = [...ignored, ...configuration.ignore];
 		}
 		if (!flags.all) {
-			ignored = [...ignored, ...defaultIgnoreList];
+			ignored = [...ignored, ...flatDefaultIgnoreList];
 		}
 		if (flags.exclude) {
 			ignored = [...ignored, ...flags.exclude];

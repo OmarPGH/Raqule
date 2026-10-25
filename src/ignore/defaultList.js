@@ -1,103 +1,81 @@
 import { outputFileName } from '../shared/index.js';
 
-const defaultIgnoreList = [
-	// Version control
-	'.git',
-	'.svn',
-	'.hg',
+const defaultIgnoreList = {
+	versionControl: ['.git', '.svn', '.hg'],
 
-	// JavaScript / TypeScript / Node
-	'node_modules',
-	'package-lock.json',
-	'yarn.lock',
-	'pnpm-lock.yaml',
-	'bun.lockb',
-	'.npm',
-	'dist',
-	'build',
-	'coverage',
-	'.next',
-	'.nuxt',
-	'.output',
-	'.turbo',
-	'.cache',
-	'*.tsbuildinfo',
-	'*.log',
-	'npm-debug.log*',
-	'yarn-debug.log*',
-	'yarn-error.log*',
+	javascript: [
+		'node_modules',
+		'package-lock.json',
+		'yarn.lock',
+		'pnpm-lock.yaml',
+		'bun.lockb',
+		'.npm',
+		'dist',
+		'build',
+		'coverage',
+		'.next',
+		'.nuxt',
+		'.output',
+		'.turbo',
+		'.cache',
+		'*.tsbuildinfo',
+		'*.log',
+		'npm-debug.log*',
+		'yarn-debug.log*',
+		'yarn-error.log*',
+	],
 
-	// Secrets / Credentials
-	'.env!(.example|.sample)*',
-	'.npmrc',
-	'.pypirc',
-	'.netrc',
+	secrets: ['.env!(.example|.sample)*', '.npmrc', '.pypirc', '.netrc'],
 
-	// Cloud / Infrastructure credentials
-	'.aws',
-	'.azure',
-	'.gcloud',
-	'.kube',
-	'.terraform',
-	'*.tfstate',
-	'*.tfstate.*',
+	cloud: [
+		'.aws',
+		'.azure',
+		'.gcloud',
+		'.kube',
+		'.terraform',
+		'*.tfstate',
+		'*.tfstate.*',
+	],
 
-	// Rust
-	'target',
-	'Cargo.lock',
+	rust: ['target', 'Cargo.lock'],
 
-	// Python
-	'__pycache__',
-	'*.pyc',
-	'.venv',
-	'venv',
-	'.pytest_cache',
-	'.mypy_cache',
-	'.ruff_cache',
-	'.tox',
-	'*.egg-info',
+	python: [
+		'__pycache__',
+		'*.pyc',
+		'.venv',
+		'venv',
+		'.pytest_cache',
+		'.mypy_cache',
+		'.ruff_cache',
+		'.tox',
+		'*.egg-info',
+	],
 
-	// Java / Kotlin / JVM
-	'.gradle',
-	'.idea',
-	'*.class',
-	'*.jar',
+	java: ['.gradle', '.idea', '*.class', '*.jar'],
 
-	// Go
-	'vendor',
+	go: ['vendor'],
 
-	// .NET
-	'obj',
-	'*.user',
+	dotnet: ['obj', '*.user'],
 
-	// C / C++
-	'CMakeFiles',
-	'cmake-build-debug',
-	'cmake-build-release',
-	'*.o',
-	'*.obj',
+	cpp: [
+		'CMakeFiles',
+		'cmake-build-debug',
+		'cmake-build-release',
+		'*.o',
+		'*.obj',
+	],
 
-	// Dart / Flutter
-	'.dart_tool',
-	'.pub-cache',
-	'*.g.dart',
+	dart: ['.dart_tool', '.pub-cache', '*.g.dart'],
 
-	// Ruby
-	'.bundle',
+	ruby: ['.bundle'],
 
-	// Swift / Xcode
-	'DerivedData',
-	'*.xcuserstate',
+	swift: ['DerivedData', '*.xcuserstate'],
 
-	// OS / Editor junk
-	'.DS_Store',
-	'Thumbs.db',
-	'*.swp',
-	'*.swo',
-	'*~',
+	osJunk: ['.DS_Store', 'Thumbs.db', '*.swp', '*.swo', '*~'],
 
-	// Raqule
-	outputFileName
-];
+	raqule: [outputFileName],
+};
 
-export { defaultIgnoreList };
+const flatDefaultIgnoreList = Object.values(defaultIgnoreList).flat();
+
+export { defaultIgnoreList, flatDefaultIgnoreList };
