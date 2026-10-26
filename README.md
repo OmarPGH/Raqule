@@ -25,7 +25,7 @@
 - [Features](#-features)
 - [Built With](#%EF%B8%8F-built-with)
 - [Installation](#-installation)
-- [Building from Source (Developers)](#%EF%B8%8F-building-from-source-developers)
+- [Building from Source (Developers & Termux Users)](#%EF%B8%8F-building-from-source)
 - [Available Flags](#-available-flags)
 - [Filtering Files & Folders](#%EF%B8%8F-filtering-files--folders)
 - [Project Config File](#%EF%B8%8F-project-config-file)
@@ -172,7 +172,8 @@ rql --version
 
 ---
 
-## 🛠️ Building from Source (Developers)
+## 🛠️ Building from Source
+> **Developers and Termux Users**
 
 If you prefer installing from source code using Node.js & NPM (Node.js 22 or later is required; the release binaries themselves are built with Node.js 26):
 ```bash
@@ -184,6 +185,7 @@ npm ci
 # Link globally to your local environment
 npm link
 ```
+> **📌 Notice**: if you are **termux user**, you need **termux-api** installed for some features like (**clipboard**)
 
 ---
 
@@ -279,7 +281,7 @@ You can still combine it with CLI flags: the config file's ignore list, the defa
 Unless you pass `-a`, Raqule skips the following names:
 
 * **Version control:** `.git`, `.svn`, `.hg`
-* **Dependencies & builds:** `node_modules`, `dist`, `build`, `coverage`, `target`, `vendor`, `out`, `bin`, `obj`, `.next`, `.nuxt`, `.output`, `.turbo`, `.cache`
+* **Dependencies & builds:** `node_modules`, `dist`, `build`, `coverage`, `target`, `vendor`, `out`, `obj`, `.next`, `.nuxt`, `.output`, `.turbo`, `.cache`
 * **Lock files:** `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `bun.lockb`, `Cargo.lock`
 * **Secrets & credentials:** `.env` (and variants), `.npmrc`, `.pypirc`, `.netrc`, `.aws`, `.azure`, `.gcloud`, `.kube`
 * **Language & tool caches:** `__pycache__`, `.venv`, `venv`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `.gradle`, `.idea`, `.dart_tool`, `.pub-cache`, `.bundle`, `DerivedData`, `CMakeFiles`, and more
