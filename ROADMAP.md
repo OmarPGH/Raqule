@@ -3,11 +3,13 @@
 Here is a glimpse of what's currently in progress and planned for upcoming releases.
 
 ## 🎯 Next Release
-* Not Planned Yet
+* Add more & Improve tests.
+* Improve the overall stability.
+* Optimize the project architecture.
 ---
 
 ## 💡 Future Ideas & Backlog
-* Not Planned Yet
+* Add a focus feature ("-f", "--focus") to track specific files, analyze their imports and associated data using AST, and aggregate them.
 ---
 
 ## 🐛 Known Issues & Fixes
