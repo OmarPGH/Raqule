@@ -22,8 +22,8 @@ export function buildPatterns(flags, configuration, scope) {
 	}
 
 	function isIncludedMatch(pattern, includePattern) {
-		return mm.isMatch(pattern, [includePattern]) || mm.isMatch(includePattern, [pattern]);
-	}
+        return mm.isMatch(pattern, [includePattern], { dot: true }) || mm.isMatch(includePattern, [pattern], { dot: true });
+    }
 
 	function include(ignored, flags, scope) {
 		if (flags.include) {
