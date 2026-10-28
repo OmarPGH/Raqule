@@ -1,21 +1,25 @@
 # Raqule Roadmap
 
-Here is a glimpse of what's currently in progress and planned for upcoming releases.
+A glimpse of ongoing work and planned features.
 
 ## 🎯 Next Release
-* Add more & Improve tests.
-* Improve the overall stability.
-* Optimize the project architecture.
+- Expand test coverage.
+- Enhance overall stability.
+- Refine the project architecture.
+- Clarify README examples and documentation.
+
 ---
 
 ## 💡 Future Ideas & Backlog
-* Add a focus feature ("-f", "--focus") to track specific files, analyze their imports and associated data using AST, and aggregate them.
+- Add a `-f` / `--focus` feature to analyze selected files, trace their imports using AST, and aggregate related data.
+
 ---
 
 ## 🐛 Known Issues & Fixes
-* None
+- None currently.
+
 ---
 
-> 💡 *Have a feature request or found a bug? Feel free to open an [Issue](../../issues)!*
+> 💡 Have a feature request or found a bug? Open an [Issue](../../issues)!
 
-> 📌 *Note: This roadmap is subject to change at any time based on user feedback and project priorities and vision.*
+> 📌 This roadmap may change based on feedback and project priorities.
