@@ -1,4 +1,4 @@
-# Raqule Roadmap
+# Raqule Roadmap 🗺
 
 A glimpse of ongoing work and planned features.
 
@@ -12,6 +12,8 @@ A glimpse of ongoing work and planned features.
 
 ## 💡 Future Ideas & Backlog
 - Add a `-f` / `--focus` feature to analyze selected files, trace their imports using AST, and aggregate related data.
+- Support multiple output formats (`--format json`, `--format markdown`) for easier piping into other tools.
+- Add a diff mode to only gather files changed since the last git commit.
 
 ---
 
