@@ -1,7 +1,8 @@
+import path from 'node:path';
 import { input, confirm } from '@inquirer/prompts';
 
 async function dirPathInput() {
-	return await input({ message: "Your directory path :", default: "./" });
+	return path.resolve(await input({ message: "Your directory path :", default: "./" }));
 }
 
 async function outputPathInput() {

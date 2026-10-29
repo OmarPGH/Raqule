@@ -1,61 +1,25 @@
-import path from 'node:path';
 import fs from 'node:fs';
+import path from 'node:path';
 import { clipboardWrite, countTokens, formatTree, formatFiles, formatFinal } from './utils/index.js';
-import { readFlags, dirPathInput, outputPathInput, addConfigFileInput, readConfig, writeConfig, validateConfig } from './input/index.js';
-import { outputFileName } from './shared/index.js';
+import { readFlags, dirPathInput, outputPathInput } from './input/index.js';
 import { gather, generateTree } from './core/index.js';
+import { validateDirectory } from './validation/index.js';
+import { outputFileName } from './shared/index.js';
+import { config } from './config/index.js';
 
 async function main() {
 	const flags = await readFlags();
-	const dirPath = path.resolve(await dirPathInput());
-
-    try {
-        const stat = await fs.promises.stat(dirPath);
-        if (!stat.isDirectory()) {
-            throw new Error(`"${dirPath}"\n\nexists but isn't a directory.`);
-        }
-    } catch (err) {
-        if (err.code === 'ENOENT') {
-            throw new Error(`Directory not found:\n\n"${dirPath}".\n\nPlease check the path and try again.`);
-        }
-        throw err;
-    }
-
-	let configuration = await readConfig(dirPath);
-	const configurationDefault = { ignore: [] };
-
-	if (!configuration) {
-		configuration = configurationDefault;
-		if (await addConfigFileInput()) {
-			await writeConfig(dirPath, configurationDefault);
-		}
-	}
-	if (configuration === 'broken') {
-		throw new Error("Syntax Error: You have a broken config file.\
-		\n Your config file doesn't comply with TOML files standards.\
-		\n Please check it and rewrite it using the correct TOML standards.\
-		\n You can also delete it if it doesn't contain anythig important, and create a new one.\
-		\nAnd try again.");
-	}
-
-	validateConfig(configuration);
+	const dirPath = await dirPathInput();
+	validateDirectory(dirPath);
+	
+	const configuration = await config(dirPath);
 	let outputPath;
 
 	if (flags.printOnly) {
 		outputPath = './';
 	} else {
 		outputPath = await outputPathInput();
-		try {
-	        const stat = await fs.promises.stat(outputPath);
-	        if (!stat.isDirectory()) {
-	            throw new Error(`"${outputPath}"\n\nexists but isn't a directory.`);
-	        }
-	    } catch (err) {
-	        if (err.code === 'ENOENT') {
-	            throw new Error(`Directory not found:\n\n"${outputPath}".\n\nPlease check the path and try again.`);
-	        }
-	        throw err;
-	    }
+		validateDirectory(outputPath);
 	}
 
 	const outputFile = path.resolve(outputPath, outputFileName);
@@ -85,7 +49,7 @@ async function main() {
     }
 
 	if (!flags.printOnly) {
-		await fs.promises.writeFile(finalContent, outputFile);
+		await fs.promises.writeFile(outputFile, finalContent);
 		console.log(`\nYou'll find ${outputFileName} file at [ ${path.join(outputPath, outputFileName)} | ${outputFile} ]`);
 	}
 }
