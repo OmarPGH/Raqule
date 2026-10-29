@@ -1,5 +1,5 @@
 import { program, InvalidArgumentError } from 'commander';
-import { packageInfo } from '../shared/index.js';
+import packageInfo from '../../package.json' with { type: 'json' }
 
 function parseDepth(value) {
     const normalized = value.toLowerCase();

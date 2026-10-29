@@ -1,7 +1,8 @@
 import path from 'node:path';
 import fs from 'node:fs';
-import { outputFileName, write, clipboardWrite, countTokens, formatTree, formatFiles, formatFinal } from './shared/index.js';
+import { clipboardWrite, countTokens, formatTree, formatFiles, formatFinal } from './utils/index.js';
 import { readFlags, dirPathInput, outputPathInput, addConfigFileInput, readConfig, writeConfig, validateConfig } from './input/index.js';
+import { outputFileName } from './shared/index.js';
 import { gather, generateTree } from './core/index.js';
 
 async function main() {
@@ -84,7 +85,7 @@ async function main() {
     }
 
 	if (!flags.printOnly) {
-		await write(finalContent, outputFile);
+		await fs.promises.writeFile(finalContent, outputFile);
 		console.log(`\nYou'll find ${outputFileName} file at [ ${path.join(outputPath, outputFileName)} | ${outputFile} ]`);
 	}
 }

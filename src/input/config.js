@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parse, stringify } from 'smol-toml';
 import * as z from 'zod';
-import { formatConfigErrors } from '../shared/index.js';
+import { formatConfigErrors } from '../utils/index.js';
 
 export async function readConfig(dirPath) {
 	const configPath = path.resolve(dirPath, 'raqule-config.toml');
