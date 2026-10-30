@@ -353,7 +353,7 @@ Raqule
 
 - **`utils/`** — standalone features (clipboard, tokens).
 - **`helpers/`** — small secondary modules, not a feature on their own.
-- **`shared/`** — cross-cutting values everyone uses but nobody "owns" (constants).
+- **`shared/`** — cross-cutting values everyone uses but nobody **"owns"** (constants).
 
 > **Note:** `raqule-config.toml` is only created if you say yes to the prompt on first run inside a project — see [Project Config File](#%EF%B8%8F-project-config-file).
 
