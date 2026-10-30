@@ -12,4 +12,5 @@ export async function validateDirectory(directory) {
         }
         throw err;
     }
+    return directory;
 }
