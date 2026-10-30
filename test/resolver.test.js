@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { IgnoreResolver } from '../src/ignore/resolver.js';
-import { defaultIgnoreList } from '../src/ignore/defaultList.js';
+import { defaultIgnoreList } from '../src/ignore/index.js';
 
 const EXTGLOB_NEGATION_PATTERN = /^(.*)!\((.+)\)(.*)$/;
 

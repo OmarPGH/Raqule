@@ -1,11 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parse, stringify } from 'smol-toml';
-import * as z from 'zod';
-import { formatConfigErrors } from '../shared/index.js';
+import { configFileName } from '../shared/index.js'
 
 export async function readConfig(dirPath) {
-	const configPath = path.resolve(dirPath, 'raqule-config.toml');
+	const configPath = path.resolve(dirPath, configFileName);
 	try {
 		const configData = await fs.promises.readFile(configPath, 'utf8');
 		try {
@@ -20,18 +19,7 @@ export async function readConfig(dirPath) {
 }
 
 export async function writeConfig(dirPath, content) {
-	const configPath = path.resolve(dirPath, 'raqule-config.toml');
+	const configPath = path.resolve(dirPath, configFileName);
 	await fs.promises.writeFile(configPath, stringify(content));
 	return true;
-}
-
-export function validateConfig(configuration) {
-	const configSchema = z.object({
-		ignore: z.array(z.string()),
-	})
-	const result = configSchema.safeParse(configuration);
-
-	if (!result.success) {
-		throw new Error(formatConfigErrors(result.error));
-	}
 }

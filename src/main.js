@@ -1,91 +1,62 @@
-import path from 'node:path';
 import fs from 'node:fs';
-import { outputFileName, write, clipboardWrite, countTokens, formatTree, formatFiles, formatFinal } from './shared/index.js';
-import { readFlags, dirPathInput, outputPathInput, addConfigFileInput, readConfig, writeConfig, validateConfig } from './input/index.js';
+import path from 'node:path';
+import { clipboardWrite, countTokens, formatTree, formatFiles, formatFinal } from './utils/index.js';
+import { readFlags, dirPathInput, outputPathInput } from './input/index.js';
 import { gather, generateTree } from './core/index.js';
+import { validateDirectory } from './validation/index.js';
+import { outputFileName } from './shared/index.js';
+import { config } from './config/index.js';
 
 async function main() {
 	const flags = await readFlags();
-	const dirPath = path.resolve(await dirPathInput());
-
-    try {
-        const stat = await fs.promises.stat(dirPath);
-        if (!stat.isDirectory()) {
-            throw new Error(`"${dirPath}"\n\nexists but isn't a directory.`);
-        }
-    } catch (err) {
-        if (err.code === 'ENOENT') {
-            throw new Error(`Directory not found:\n\n"${dirPath}".\n\nPlease check the path and try again.`);
-        }
-        throw err;
-    }
-
-	let configuration = await readConfig(dirPath);
-	const configurationDefault = { ignore: [] };
-
-	if (!configuration) {
-		configuration = configurationDefault;
-		if (await addConfigFileInput()) {
-			await writeConfig(dirPath, configurationDefault);
-		}
-	}
-	if (configuration === 'broken') {
-		throw new Error("Syntax Error: You have a broken config file.\
-		\n Your config file doesn't comply with TOML files standards.\
-		\n Please check it and rewrite it using the correct TOML standards.\
-		\n You can also delete it if it doesn't contain anythig important, and create a new one.\
-		\nAnd try again.");
-	}
-
-	validateConfig(configuration);
-	let outputPath;
-
-	if (flags.printOnly) {
-		outputPath = './';
-	} else {
-		outputPath = await outputPathInput();
-		try {
-	        const stat = await fs.promises.stat(outputPath);
-	        if (!stat.isDirectory()) {
-	            throw new Error(`"${outputPath}"\n\nexists but isn't a directory.`);
-	        }
-	    } catch (err) {
-	        if (err.code === 'ENOENT') {
-	            throw new Error(`Directory not found:\n\n"${outputPath}".\n\nPlease check the path and try again.`);
-	        }
-	        throw err;
-	    }
-	}
-
-	const outputFile = path.resolve(outputPath, outputFileName);
+	const dirPath = await validateDirectory(await dirPathInput());
+	const configuration = await config(dirPath);
 	const treeStr = await generateTree(dirPath, flags, configuration);
 	const formattedTree = formatTree(treeStr);
-
 	let finalContent = formattedTree;
-
-	if (!flags.tree) {
-		const filesTree = await gather(dirPath, flags, configuration);
-		const formattedFiles = formatFiles(filesTree);
-		finalContent = formatFinal(formattedTree, formattedFiles);
-	}
-
-	if (flags.copy) {
-		await clipboardWrite(finalContent);
-	}
-
-    if (flags.print || flags.printOnly) {
-		console.log(finalContent);
-		console.log('The Result is Above')
-	}
-
-    if (flags.tokens) {
-		const totalTokens = countTokens(finalContent);
-		console.log(`\nEstimated Total Tokens: ${totalTokens.toLocaleString()}`)
-    }
-
-	if (!flags.printOnly) {
-		await write(finalContent, outputFile);
-		console.log(`\nYou'll find ${outputFileName} file at [ ${path.join(outputPath, outputFileName)} | ${outputFile} ]`);
+	
+	const triggers = [
+		{
+			condition: () => !flags.tree,
+			action: async () => {
+				const filesTree = await gather(dirPath, flags, configuration);
+				const formattedFiles = formatFiles(filesTree);
+				finalContent = formatFinal(formattedTree, formattedFiles);
+			}
+		},
+		{
+			condition: () => flags.copy,
+			action: async () => {
+				await clipboardWrite(finalContent);
+			}
+		},
+		{
+			condition: () => flags.print || flags.printOnly,
+			action: () => {
+				console.log(finalContent);
+				console.log('The Result is Above')
+			}
+		},
+		{
+			condition: () => flags.tokens,
+			action: () => {
+				const totalTokens = countTokens(finalContent);
+				console.log(`\nEstimated Total Tokens: ${totalTokens.toLocaleString()}`);
+			}
+		},
+		{
+			condition: () => !flags.printOnly,
+			action: async () => {
+				const outputPath = await validateDirectory(await outputPathInput());
+				const outputFile = path.resolve(outputPath, outputFileName);
+				await fs.promises.writeFile(outputFile, finalContent);
+				console.log(`\nYou'll find ${outputFileName} file at [ ${path.join(outputPath, outputFileName)} | ${outputFile} ]`);
+			}
+		},
+	];
+	
+	for (const trigger of triggers) {
+		if (trigger.condition()) await trigger.action();
 	}
 }
 

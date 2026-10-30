@@ -1,1 +1,2 @@
-export { IgnoreResolver } from './resolver.js';
+export * from './resolver.js';
+export * from './defaultList.js';
