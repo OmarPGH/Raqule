@@ -10,6 +10,6 @@ Please make sure to review the guidelines and requirements below.
 
 2. ​2-Day Window for Requested Changes: If I request updates or fixes on your PR, you have a maximum of 2 days to implement them. Taking longer indicates that the proposed code is fundamentally broken or unviable.
 
-3. ​Responsive Communication: Please reply to any questions or review comments within 6 hours.
+3. ​Responsive Communication: Please reply to any questions or review comments within 12-24 hours.
 
 4. ​Keep it Simple & Readable (No Over-Engineering): If you are solving a problem, write the simplest possible code to achieve it (simple code, not just a simple fix). Avoid over-engineering—keep your implementation simple, clean, and highly readable.
