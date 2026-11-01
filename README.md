@@ -203,6 +203,7 @@ npm link
 | `-i, --include <names...>` | Remove these names from the ignore list, even if ignored by default or by `-e` |
 | `--ci, --content-include <names...>` | Same as `--include`, but for the contents only |
 | `--ti, --tree-include <names...>` | Same as `--include`, but for the tree only |
+| `-m, --max <number>` | Set the maximum output tokens (whole number, 1 or greater) |
 | `-p, --print` | Print the result in the terminal, and also save it to `context.md` |
 | `-P, --print-only` | Print the result in the terminal only, without creating `context.md` |
 | `-t, --tree` | Generate only the project tree, without file contents |

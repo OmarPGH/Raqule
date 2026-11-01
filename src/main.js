@@ -14,7 +14,8 @@ async function main() {
 	const treeStr = await generateTree(dirPath, flags, configuration);
 	const formattedTree = formatTree(treeStr);
 	let finalContent = formattedTree;
-	
+	let totalTokens;
+
 	const triggers = [
 		{
 			condition: () => !flags.tree,
@@ -22,6 +23,22 @@ async function main() {
 				const filesTree = await gather(dirPath, flags, configuration);
 				const formattedFiles = formatFiles(filesTree);
 				finalContent = formatFinal(formattedTree, formattedFiles);
+			}
+		},
+		{
+			condition: () => flags.tokens || flags.max,
+			action: () => {
+				totalTokens = countTokens(finalContent);
+			}
+		},
+		{
+			condition: () => flags.max,
+			action: () => {
+				if (totalTokens > flags.max) {
+					throw new Error(`The number of tokens exceeds the specified maximum limit (${flags.max})`);
+				} else {
+					flags.tokens = true;
+				}
 			}
 		},
 		{
@@ -40,7 +57,7 @@ async function main() {
 		{
 			condition: () => flags.tokens,
 			action: () => {
-				const totalTokens = countTokens(finalContent);
+				if (flags.max) console.log(`\nBelow the maximum allowed number of tokens (${flags.max})`);
 				console.log(`\nEstimated Total Tokens: ${totalTokens.toLocaleString()}`);
 			}
 		},
