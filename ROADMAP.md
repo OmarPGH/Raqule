@@ -8,6 +8,7 @@ A glimpse of ongoing work and planned features.
 - Refine the project architecture.
 - Clarify README examples and documentation.
 - Add a `-m` / `--max` flag to set a maximum number of output tokens.
+- Add a `-C` / `--copy-only` flag to just copy the result without printing it.
 
 ---
 
