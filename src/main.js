@@ -25,7 +25,7 @@ async function main() {
 			}
 		},
 		{
-			condition: () => flags.copy,
+			condition: () => flags.copy || flags.copyOnly,
 			action: async () => {
 				await clipboardWrite(finalContent);
 			}
@@ -45,7 +45,7 @@ async function main() {
 			}
 		},
 		{
-			condition: () => !flags.printOnly,
+			condition: () => !flags.printOnly && !flags.copyOnly,
 			action: async () => {
 				const outputPath = await validateDirectory(await outputPathInput());
 				const outputFile = path.resolve(outputPath, outputFileName);

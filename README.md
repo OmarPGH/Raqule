@@ -195,6 +195,7 @@ npm link
 | :--- | :--- |
 | `-a, --all` | Don't apply the *default ignore list* (e.g. .git, **.env**, node_modules, target). **Not recommended & Unsafe** |
 | `-c, --copy` | Copy the result/output to your clipboard |
+| `-C, --copy-only` | Copy the result/output to your clipboard only, without printing it |
 | `-d, --depth <number>` | Set the maximum folder depth (whole number, 1 or greater) |
 | `-e, --exclude <names...>` | Skip these names in the contents, and do not expand them in the tree |
 | `--ce, --content-exclude <names...>` | Skip these names in the contents only |
