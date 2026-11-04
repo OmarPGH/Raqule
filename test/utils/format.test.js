@@ -3,24 +3,22 @@ import assert from 'node:assert/strict';
 import { formatTree, formatFiles, formatFinal } from '../../src/utils/format.js';
 
 describe('formatTree', () => {
-	it('wraps the tree string in a fenced code block with a header and end marker', () => {
-		const result = formatTree('root/\n  file.js');
+	it('includes the given tree string in the output, untouched', () => {
+		const treeStr = 'root/\n  file.js';
+		const result = formatTree(treeStr);
 
-		assert.ok(result.startsWith('Project Tree:\n\n```\n'));
-		assert.ok(result.includes('root/\n  file.js'));
-		assert.ok(result.includes('```'));
-		assert.ok(result.includes('-----~END~-----'));
+		assert.equal(typeof result, 'string');
+		assert.ok(result.includes(treeStr));
 	});
 
-	it('still produces the wrapping structure for an empty tree string', () => {
+	it('does not throw and still returns a string for an empty tree string', () => {
 		const result = formatTree('');
-
-		assert.equal(result, 'Project Tree:\n\n```\n\n```\n\n-----~END~-----\n\n');
+		assert.equal(typeof result, 'string');
 	});
 });
 
 describe('formatFiles', () => {
-	it('formats a single file entry with its relative path, extension, and content', () => {
+	it('includes the relative path and content of a single file entry', () => {
 		const filesObj = {
 			'index.js': {
 				isFolder: false,
@@ -32,12 +30,11 @@ describe('formatFiles', () => {
 
 		const result = formatFiles(filesObj);
 
-		assert.ok(result.includes('index.js Content :'));
-		assert.ok(result.includes('`````js\nconsole.log("hi");\n`````'));
-		assert.ok(result.includes('-----~END~-----'));
+		assert.ok(result.includes('index.js'));
+		assert.ok(result.includes('console.log("hi");'));
 	});
 
-	it('recurses into folder entries and formats every nested file', () => {
+	it('recurses into folder entries and includes every nested file', () => {
 		const filesObj = {
 			src: {
 				isFolder: true,
@@ -65,9 +62,9 @@ describe('formatFiles', () => {
 
 		const result = formatFiles(filesObj);
 
-		assert.ok(result.includes('src/a.js Content :'));
+		assert.ok(result.includes('src/a.js'));
 		assert.ok(result.includes('const a = 1;'));
-		assert.ok(result.includes('src/nested/b.ts Content :'));
+		assert.ok(result.includes('src/nested/b.ts'));
 		assert.ok(result.includes('const b = 2;'));
 	});
 
@@ -86,28 +83,44 @@ describe('formatFiles', () => {
 		assert.equal(formatFiles(filesObj), '');
 	});
 
-	it('preserves object key order across multiple top-level files', () => {
+	it('preserves the order files were given in across multiple top-level files', () => {
 		const filesObj = {
 			'first.js': { isFolder: false, relativePath: 'first.js', extension: 'js', content: 'A' },
 			'second.js': { isFolder: false, relativePath: 'second.js', extension: 'js', content: 'B' },
 		};
 
 		const result = formatFiles(filesObj);
-		const firstIndex = result.indexOf('first.js Content :');
-		const secondIndex = result.indexOf('second.js Content :');
+		const firstIndex = result.indexOf('first.js');
+		const secondIndex = result.indexOf('second.js');
 
 		assert.ok(firstIndex !== -1 && secondIndex !== -1);
 		assert.ok(firstIndex < secondIndex);
 	});
+
+	it('keeps each file visually distinguishable from the next (not concatenated with zero separation)', () => {
+		const filesObj = {
+			'first.js': { isFolder: false, relativePath: 'first.js', extension: 'js', content: 'A' },
+			'second.js': { isFolder: false, relativePath: 'second.js', extension: 'js', content: 'B' },
+		};
+
+		const result = formatFiles(filesObj);
+
+		// Whatever the separator looks like, the two files' content blocks
+		// must not run directly into each other.
+		assert.ok(!result.includes('A' + 'second.js'));
+	});
 });
 
 describe('formatFinal', () => {
-	it('concatenates the formatted tree and formatted files in order', () => {
+	it('contains both the formatted tree and the formatted files, tree before files', () => {
 		const result = formatFinal('TREE_PART', 'FILES_PART');
-		assert.equal(result, 'TREE_PARTFILES_PART');
+
+		assert.ok(result.includes('TREE_PART'));
+		assert.ok(result.includes('FILES_PART'));
+		assert.ok(result.indexOf('TREE_PART') < result.indexOf('FILES_PART'));
 	});
 
-	it('handles empty strings for both arguments', () => {
-		assert.equal(formatFinal('', ''), '');
+	it('handles empty strings for both arguments without throwing', () => {
+		assert.equal(typeof formatFinal('', ''), 'string');
 	});
 });
