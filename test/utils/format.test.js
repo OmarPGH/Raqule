@@ -47,6 +47,17 @@ describe('formatFiles', () => {
 	// one block per file — rather than just searching for substrings
 	// anywhere in the whole blob, which can give false positives when
 	// one file's content happens to appear inside another's.
+	//
+	// CAUTION: this helper is itself naive about one thing — formatFiles
+	// does not escape or encode file content, so if a file's own content
+	// happens to contain the literal separator text, splitIntoBlocks will
+	// misinterpret it as a boundary and produce *more* blocks than there
+	// are files. That's a real ambiguity in the output format itself (not
+	// something a smarter regex could fix from the outside), so only use
+	// this helper for fixtures that don't contain separator-like content.
+	// The "is lossless even if content looks like the separator" test
+	// below checks that scenario directly against formatFiles' raw
+	// output instead, without going through this helper.
 	const BLOCK_SEPARATOR = /-{5}~END~-{5}\n\n/;
 	function splitIntoBlocks(result) {
 		return result.split(BLOCK_SEPARATOR).filter((block) => block.length > 0);
@@ -135,6 +146,47 @@ describe('formatFiles', () => {
 		assert.ok(blocks[0].includes('function a() {}'));
 		assert.ok(!blocks[0].includes('// plus more'));
 		assert.ok(blocks[1].includes('function a() {} // plus more'));
+	});
+
+	// NOTE: documents a real characteristic of formatFiles, surfaced during
+	// review: file content is emitted verbatim, with no escaping. If a
+	// file's own content contains the separator formatFiles uses between
+	// entries, that text passes straight through unmodified — formatFiles
+	// itself doesn't lose or corrupt anything, but a naive consumer who
+	// splits the output on that separator (like our splitIntoBlocks helper
+	// above) would be fooled into seeing more "files" than were given. We
+	// verify formatFiles' own behavior directly here (losslessness),
+	// without going through splitIntoBlocks, since that helper is exactly
+	// what this scenario would break.
+	it('does not corrupt a file whose own content contains separator-like text (though a naive splitter could be fooled by it)', () => {
+		// To actually fool splitIntoBlocks, the lookalike text has to match
+		// the real separator byte-for-byte, including the blank line
+		// formatFiles always emits after it ("-----~END~-----\n\n") — and
+		// it has to land on its own line, not embedded inside a longer
+		// line (e.g. inside a string literal with quotes around it, which
+		// turns out NOT to confuse the splitter, since the exact "\n\n"
+		// boundary never occurs). This fixture is the realistic worst
+		// case: a file whose content happens to end with a line that is
+		// exactly the separator text, such as a decorative comment banner.
+		const separatorLookalike = 'console.log(1);\n\n-----~END~-----\n\n';
+		const filesObj = {
+			'tricky.js': { isFolder: false, relativePath: 'tricky.js', extension: 'js', content: separatorLookalike },
+			'after.js': { isFolder: false, relativePath: 'after.js', extension: 'js', content: 'const after = true;' },
+		};
+
+		const result = formatFiles(filesObj);
+
+		// formatFiles itself must still preserve both files' content
+		// verbatim and in full — that's the real contract to verify.
+		assert.ok(result.includes(separatorLookalike));
+		assert.ok(result.includes('const after = true;'));
+
+		// Document the known footgun: a naive split on the separator
+		// yields more chunks than there are files, because the
+		// lookalike text inside tricky.js's own content is indistinguishable
+		// from a real boundary.
+		const blocks = splitIntoBlocks(result);
+		assert.ok(blocks.length > 2, 'expected the naive splitter to be fooled by separator-like content, illustrating why callers should not rely on this splitting approach for untrusted file content');
 	});
 });
 

@@ -18,7 +18,6 @@ describe('countTokens', () => {
 		const expected = enc.encode('Hello, world!').length;
 
 		assert.equal(countTokens('Hello, world!'), expected);
-		assert.equal(countTokens('Hello, world!'), 4);
 	});
 
 	it('matches js-tiktoken for a longer, multi-sentence piece of text', () => {
@@ -27,6 +26,36 @@ describe('countTokens', () => {
 		const expected = enc.encode(text).length;
 
 		assert.equal(countTokens(text), expected);
+	});
+
+	// Fixed fixtures: literal expected counts, computed once and hardcoded
+	// here rather than recomputed from js-tiktoken at test time. The tests
+	// above (which call getEncoding() live) prove countTokens is wired up
+	// to tiktoken correctly; these prove the *actual numbers* don't quietly
+	// drift — if a js-tiktoken upgrade, a BPE vocab change, or a bug in
+	// countTokens ever shifted these counts, the runtime-comparison tests
+	// above would still pass (since both sides would move together), but
+	// these fixed-value tests would fail and flag it. Values below were
+	// computed directly from js-tiktoken once; see the describe block for
+	// how to regenerate them if they ever need to change deliberately.
+	describe('fixed fixtures (regression values, independent of runtime encoding calls)', () => {
+		// Regenerate with: node -e "import('js-tiktoken').then(({getEncoding}) => console.log(getEncoding('o200k_base').encode(TEXT).length))"
+		const FIXTURES = [
+			{ text: 'a', o200k_base: 1, cl100k_base: 1 },
+			{ text: '12345', o200k_base: 2, cl100k_base: 2 },
+			{ text: 'Hello, world!', o200k_base: 4, cl100k_base: 4 },
+			{ text: 'The quick brown fox jumps over the lazy dog.', o200k_base: 10, cl100k_base: 10 },
+		];
+
+		for (const { text, o200k_base, cl100k_base } of FIXTURES) {
+			it(`"${text}" is ${o200k_base} tokens under o200k_base`, () => {
+				assert.equal(countTokens(text, 'o200k_base'), o200k_base);
+			});
+
+			it(`"${text}" is ${cl100k_base} tokens under cl100k_base`, () => {
+				assert.equal(countTokens(text, 'cl100k_base'), cl100k_base);
+			});
+		}
 	});
 
 	it('returns a larger count for longer text than for shorter text', () => {
