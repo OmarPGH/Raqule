@@ -27,21 +27,32 @@ describe('formatTree', () => {
 });
 
 describe('formatFiles', () => {
-	// Flattens a nested filesObj tree into { relativePath: content } pairs,
-	// independent of formatFiles' own implementation, so we have a ground
-	// truth to check formatFiles' output against.
-	function flatten(entries, out = {}) {
+	// Flattens a nested filesObj tree into an ordered [relativePath, content]
+	// list, independent of formatFiles' own implementation, so we have a
+	// ground truth to check formatFiles' output against.
+	function flatten(entries, out = []) {
 		for (const entry of Object.values(entries)) {
 			if (entry.isFolder) {
 				flatten(entry.children, out);
 			} else {
-				out[entry.relativePath] = entry.content;
+				out.push([entry.relativePath, entry.content]);
 			}
 		}
 		return out;
 	}
 
-	it('is lossless: every file\'s content appears in the output exactly once', () => {
+	// Splits formatFiles' output into one chunk per file using the
+	// separator the implementation itself documents (5 dashes, ~END~,
+	// 5 dashes). This checks the actual *structure* of the output —
+	// one block per file — rather than just searching for substrings
+	// anywhere in the whole blob, which can give false positives when
+	// one file's content happens to appear inside another's.
+	const BLOCK_SEPARATOR = /-{5}~END~-{5}\n\n/;
+	function splitIntoBlocks(result) {
+		return result.split(BLOCK_SEPARATOR).filter((block) => block.length > 0);
+	}
+
+	it('produces exactly one output block per file, each containing only that file\'s content', () => {
 		const filesObj = {
 			src: {
 				isFolder: true,
@@ -60,13 +71,21 @@ describe('formatFiles', () => {
 
 		const expected = flatten(filesObj);
 		const result = formatFiles(filesObj);
+		const blocks = splitIntoBlocks(result);
 
-		for (const [relativePath, content] of Object.entries(expected)) {
-			// The content must show up, and show up only once — if it
-			// appeared twice we'd be duplicating a file in the output.
-			const occurrences = result.split(content).length - 1;
-			assert.equal(occurrences, 1, `expected "${content}" (from ${relativePath}) to appear exactly once`);
-		}
+		assert.equal(blocks.length, expected.length);
+
+		expected.forEach(([relativePath, content], i) => {
+			assert.ok(blocks[i].includes(relativePath), `block ${i} should mention ${relativePath}`);
+			assert.ok(blocks[i].includes(content), `block ${i} should contain its own content`);
+			// And it should not contain any *other* file's content/path —
+			// that's what actually proves the boundary held, not just
+			// "this substring appears somewhere in the whole result".
+			expected.forEach(([otherPath, otherContent], j) => {
+				if (i === j) return;
+				assert.ok(!blocks[i].includes(otherContent), `block ${i} (${relativePath}) leaked content from ${otherPath}`);
+			});
+		});
 	});
 
 	it('preserves the relative order files were encountered in, depth-first', () => {
@@ -100,18 +119,22 @@ describe('formatFiles', () => {
 		);
 	});
 
-	it('keeps two files from running into each other with zero separation', () => {
+	it('keeps file boundaries intact even when one file\'s content is a substring of another\'s', () => {
+		// This is exactly the case naive substring-counting assertions miss:
+		// "function a() {}" is a substring of "function a() {} // plus more".
+		// The block-splitting approach above still has to tell them apart.
 		const filesObj = {
-			'first.js': { isFolder: false, relativePath: 'first.js', extension: 'js', content: 'A' },
-			'second.js': { isFolder: false, relativePath: 'second.js', extension: 'js', content: 'B' },
+			'short.js': { isFolder: false, relativePath: 'short.js', extension: 'js', content: 'function a() {}' },
+			'long.js': { isFolder: false, relativePath: 'long.js', extension: 'js', content: 'function a() {} // plus more' },
 		};
 
 		const result = formatFiles(filesObj);
+		const blocks = splitIntoBlocks(result);
 
-		// Whatever the separator looks like, file boundaries must stay
-		// distinguishable: concatenating the two contents directly
-		// ("AB") must not appear as a substring of the result.
-		assert.ok(!result.includes('AB'));
+		assert.equal(blocks.length, 2);
+		assert.ok(blocks[0].includes('function a() {}'));
+		assert.ok(!blocks[0].includes('// plus more'));
+		assert.ok(blocks[1].includes('function a() {} // plus more'));
 	});
 });
 
