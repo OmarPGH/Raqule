@@ -8,6 +8,8 @@
 
 ![language](https://img.shields.io/badge/Language-JavaScript%20ES20Module-%23EAB308)
 
+![runtime](https://img.shields.io/badge/Runtime-Node.js%20Latest-%23E83B3B)
+
 ![raqule downloads](https://img.shields.io/github/downloads/OmarPGH/Raqule/total?color=%23AA00FF&label=Raqule%20Downloads)
 
 ---
