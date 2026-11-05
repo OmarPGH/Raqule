@@ -41,23 +41,15 @@ describe('formatFiles', () => {
 		return out;
 	}
 
-	// Splits formatFiles' output into one chunk per file using the
-	// separator the implementation itself documents (5 dashes, ~END~,
-	// 5 dashes). This checks the actual *structure* of the output —
-	// one block per file — rather than just searching for substrings
-	// anywhere in the whole blob, which can give false positives when
-	// one file's content happens to appear inside another's.
+	// Splits formatFiles' output into one chunk per file on the real
+	// separator, so we can check output *structure* (one block per file)
+	// instead of just searching for substrings anywhere in the blob.
 	//
-	// CAUTION: this helper is itself naive about one thing — formatFiles
-	// does not escape or encode file content, so if a file's own content
-	// happens to contain the literal separator text, splitIntoBlocks will
-	// misinterpret it as a boundary and produce *more* blocks than there
-	// are files. That's a real ambiguity in the output format itself (not
-	// something a smarter regex could fix from the outside), so only use
-	// this helper for fixtures that don't contain separator-like content.
-	// The "is lossless even if content looks like the separator" test
-	// below checks that scenario directly against formatFiles' raw
-	// output instead, without going through this helper.
+	// CAUTION: naive about one thing — formatFiles doesn't escape file
+	// content, so content containing the literal separator text fools this
+	// into seeing extra blocks. Only use it for fixtures without
+	// separator-like content; see the "does not corrupt..." test below for
+	// that case, checked directly against formatFiles' raw output instead.
 	const BLOCK_SEPARATOR = /-{5}~END~-{5}\n\n/;
 	function splitIntoBlocks(result) {
 		return result.split(BLOCK_SEPARATOR).filter((block) => block.length > 0);
@@ -117,6 +109,20 @@ describe('formatFiles', () => {
 		assert.ok(positions.every((p) => p !== -1));
 		assert.ok(positions[0] < positions[1]);
 		assert.ok(positions[1] < positions[2]);
+	});
+
+	it('includes a file with empty content as its own block, without dropping or merging it', () => {
+		const filesObj = {
+			'empty.js': { isFolder: false, relativePath: 'empty.js', extension: 'js', content: '' },
+			'after.js': { isFolder: false, relativePath: 'after.js', extension: 'js', content: 'const after = true;' },
+		};
+
+		const result = formatFiles(filesObj);
+		const blocks = splitIntoBlocks(result);
+
+		assert.equal(blocks.length, 2);
+		assert.ok(blocks[0].includes('empty.js'));
+		assert.ok(blocks[1].includes('const after = true;'));
 	});
 
 	it('returns an empty string for no entries, and for folders with no files inside them', () => {
