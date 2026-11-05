@@ -3,33 +3,29 @@ import assert from 'node:assert/strict';
 import { formatTree, formatFiles, formatFinal } from '../../src/utils/format.js';
 
 describe('formatTree', () => {
-	it('is lossless: the exact tree string can be recovered from the output', () => {
+	it('includes the exact tree string in the output, unmodified', () => {
 		const treeStr = 'root/\n  file.js\n  nested/\n    other.ts';
 		const result = formatTree(treeStr);
 
 		assert.equal(typeof result, 'string');
-		// The job of formatTree is to wrap treeStr for display without
-		// mutating it. However it chooses to wrap it, the original text
-		// must appear in the output verbatim and unsplit.
 		assert.ok(result.includes(treeStr));
 	});
 
-	it('never throws, and always returns a string, no matter what kind of tree string it gets', () => {
+	it('never throws, and always returns a string, for any kind of tree string', () => {
 		for (const input of ['', 'single-line', 'line1\nline2\nline3', '   ', '特殊字符/emoji 🚀']) {
 			assert.doesNotThrow(() => formatTree(input));
 			assert.equal(typeof formatTree(input), 'string');
 		}
 	});
 
-	it('produces different output for different input (it is not a constant string)', () => {
+	it('produces different output for different input', () => {
 		assert.notEqual(formatTree('tree A'), formatTree('tree B'));
 	});
 });
 
 describe('formatFiles', () => {
-	// Flattens a nested filesObj tree into an ordered [relativePath, content]
-	// list, independent of formatFiles' own implementation, so we have a
-	// ground truth to check formatFiles' output against.
+	// Independently flattens a nested filesObj into [relativePath, content]
+	// pairs, as ground truth to check formatFiles' output against.
 	function flatten(entries, out = []) {
 		for (const entry of Object.values(entries)) {
 			if (entry.isFolder) {
@@ -41,15 +37,10 @@ describe('formatFiles', () => {
 		return out;
 	}
 
-	// Splits formatFiles' output into one chunk per file on the real
-	// separator, so we can check output *structure* (one block per file)
-	// instead of just searching for substrings anywhere in the blob.
-	//
-	// CAUTION: naive about one thing — formatFiles doesn't escape file
-	// content, so content containing the literal separator text fools this
-	// into seeing extra blocks. Only use it for fixtures without
-	// separator-like content; see the "does not corrupt..." test below for
-	// that case, checked directly against formatFiles' raw output instead.
+	// Splits output into one chunk per file on the real separator. Naive
+	// about one thing: content containing the literal separator text fools
+	// it into seeing extra blocks (see the "does not corrupt..." test,
+	// which checks that case directly against formatFiles' raw output).
 	const BLOCK_SEPARATOR = /-{5}~END~-{5}\n\n/;
 	function splitIntoBlocks(result) {
 		return result.split(BLOCK_SEPARATOR).filter((block) => block.length > 0);
@@ -81,9 +72,6 @@ describe('formatFiles', () => {
 		expected.forEach(([relativePath, content], i) => {
 			assert.ok(blocks[i].includes(relativePath), `block ${i} should mention ${relativePath}`);
 			assert.ok(blocks[i].includes(content), `block ${i} should contain its own content`);
-			// And it should not contain any *other* file's content/path —
-			// that's what actually proves the boundary held, not just
-			// "this substring appears somewhere in the whole result".
 			expected.forEach(([otherPath, otherContent], j) => {
 				if (i === j) return;
 				assert.ok(!blocks[i].includes(otherContent), `block ${i} (${relativePath}) leaked content from ${otherPath}`);
@@ -137,9 +125,6 @@ describe('formatFiles', () => {
 	});
 
 	it('keeps file boundaries intact even when one file\'s content is a substring of another\'s', () => {
-		// This is exactly the case naive substring-counting assertions miss:
-		// "function a() {}" is a substring of "function a() {} // plus more".
-		// The block-splitting approach above still has to tell them apart.
 		const filesObj = {
 			'short.js': { isFolder: false, relativePath: 'short.js', extension: 'js', content: 'function a() {}' },
 			'long.js': { isFolder: false, relativePath: 'long.js', extension: 'js', content: 'function a() {} // plus more' },
@@ -154,26 +139,7 @@ describe('formatFiles', () => {
 		assert.ok(blocks[1].includes('function a() {} // plus more'));
 	});
 
-	// NOTE: documents a real characteristic of formatFiles, surfaced during
-	// review: file content is emitted verbatim, with no escaping. If a
-	// file's own content contains the separator formatFiles uses between
-	// entries, that text passes straight through unmodified — formatFiles
-	// itself doesn't lose or corrupt anything, but a naive consumer who
-	// splits the output on that separator (like our splitIntoBlocks helper
-	// above) would be fooled into seeing more "files" than were given. We
-	// verify formatFiles' own behavior directly here (losslessness),
-	// without going through splitIntoBlocks, since that helper is exactly
-	// what this scenario would break.
-	it('does not corrupt a file whose own content contains separator-like text (though a naive splitter could be fooled by it)', () => {
-		// To actually fool splitIntoBlocks, the lookalike text has to match
-		// the real separator byte-for-byte, including the blank line
-		// formatFiles always emits after it ("-----~END~-----\n\n") — and
-		// it has to land on its own line, not embedded inside a longer
-		// line (e.g. inside a string literal with quotes around it, which
-		// turns out NOT to confuse the splitter, since the exact "\n\n"
-		// boundary never occurs). This fixture is the realistic worst
-		// case: a file whose content happens to end with a line that is
-		// exactly the separator text, such as a decorative comment banner.
+	it('does not corrupt a file whose own content contains separator-like text', () => {
 		const separatorLookalike = 'console.log(1);\n\n-----~END~-----\n\n';
 		const filesObj = {
 			'tricky.js': { isFolder: false, relativePath: 'tricky.js', extension: 'js', content: separatorLookalike },
@@ -182,17 +148,15 @@ describe('formatFiles', () => {
 
 		const result = formatFiles(filesObj);
 
-		// formatFiles itself must still preserve both files' content
-		// verbatim and in full — that's the real contract to verify.
 		assert.ok(result.includes(separatorLookalike));
 		assert.ok(result.includes('const after = true;'));
 
-		// Document the known footgun: a naive split on the separator
-		// yields more chunks than there are files, because the
-		// lookalike text inside tricky.js's own content is indistinguishable
-		// from a real boundary.
+		// A naive split on the separator yields more chunks than files,
+		// since the lookalike text is indistinguishable from a real
+		// boundary — illustrating why splitIntoBlocks isn't safe for
+		// untrusted content, even though formatFiles itself is lossless.
 		const blocks = splitIntoBlocks(result);
-		assert.ok(blocks.length > 2, 'expected the naive splitter to be fooled by separator-like content, illustrating why callers should not rely on this splitting approach for untrusted file content');
+		assert.ok(blocks.length > 2);
 	});
 });
 
@@ -204,7 +168,7 @@ describe('formatFinal', () => {
 		assert.ok(result.includes('FILES_PART'));
 	});
 
-	it('orders the tree before the files, since that is how output is consumed top-to-bottom', () => {
+	it('orders the tree before the files', () => {
 		const result = formatFinal('TREE_PART', 'FILES_PART');
 		assert.ok(result.indexOf('TREE_PART') < result.indexOf('FILES_PART'));
 	});
