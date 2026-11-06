@@ -352,7 +352,15 @@ Raqule
 │       ├── directory.js
 │       └── index.js
 └── test/
-    └── resolver.test.js
+    ├── helpers/
+    │   └── specialFiles.test.js
+    ├── ignore/
+    │   └── resolver.test.js
+    ├── utils/
+    │   ├── format.test.js
+    │   └── tokens.test.js
+    └── validation/
+        └── directory.test.js
 ```
 
 - **`utils/`** — standalone features (clipboard, tokens).
