@@ -17,7 +17,6 @@ function isIgnored(resolver, name) {
 			return ele;
 		}
 	}).join('');
-	console.log(exampleName);
   	return resolver.isIgnored(exampleName, exampleName) && resolver.isIgnored(`folderOne/folderTwo/${exampleName}`, exampleName);
 }
 
