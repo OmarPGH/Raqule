@@ -3,13 +3,7 @@
 A glimpse of ongoing work and planned features.
 
 ## 🎯 Next Release
-
-- [x] Expand test coverage.
-- [x] Enhance overall stability.
-- [x] Refine the project architecture.
-- [x] Add a `-m` / `--max` flag to set a maximum number of output tokens.
-- [x] Add a `-C` / `--copy-only` flag to just copy the result without printing it.
-
+- Not Planned Yet
 ---
 
 ## 💡 Future Ideas & Backlog
