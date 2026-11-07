@@ -100,7 +100,9 @@ Head over to the [Releases](../../releases) page and download the latest release
 | **Windows** | x64 (Intel/AMD) | `Raqule-vX.Y.Z-win-x64-release.zip` |
 | **Windows** | ARM64 | `Raqule-vX.Y.Z-win-arm64-release.zip` |
 
-Each ZIP contains the standalone executable and a copy of `README.md`. **Extract the ZIP first**, then follow the setup steps below.\n\n*(Optional)* You can verify the integrity of the downloaded ZIP files using the provided `SHA256SUMS` file. The checksums are for the ZIP archives, not the extracted executables.
+Each ZIP contains the standalone executable and a copy of `README.md`. **Extract the ZIP first**, then follow the setup steps below.
+
+*(Optional)* You can verify the integrity of the downloaded ZIP files using the provided `SHA256SUMS` file. The checksums are for the ZIP archives, not the extracted executables.
 
 ---
 
@@ -114,7 +116,8 @@ To run Raqule seamlessly from **any terminal directory** using the shortcut comm
 1. **Make it executable & rename to `rql`:**
    ```bash
    # Make the file executable
-   unzip Raqule-vX.Y.Z-linux-x64-release.zip\n   chmod +x Raqule-vX.Y.Z-linux-x64
+   unzip Raqule-vX.Y.Z-linux-x64-release.zip
+   chmod +x Raqule-vX.Y.Z-linux-x64
    # Rename it for easier use
    mv Raqule-vX.Y.Z-linux-x64 rql
    ```
@@ -159,15 +162,15 @@ Now you can run `rql` anywhere! 🎯
    *(For Windows ARM64, use the `win-arm64` ZIP name instead.)*
 2. **Rename the executable:**
    Rename `Raqule-vX.Y.Z-win-x64.exe` (or `win-arm64.exe`) to `rql.exe`.
-2. **Move to a Safe Folder:**
+3. **Move to a Safe Folder:**
    Create a dedicated folder, for example: `C:\Program Files\Raqule\`, and place `rql.exe` inside it.
-3. **Add to System PATH:**
+4. **Add to System PATH:**
    - Press `Win + R`, type `sysdm.cpl`, and hit Enter.
    - Go to the **Advanced** tab -> click **Environment Variables**.
    - Under **User variables** (or System variables), find **Path** and click **Edit**.
    - Click **New** and add the directory path (e.g., `C:\Program Files\Raqule\`).
    - Click **OK** on all windows.
-4. **Restart Terminal:**
+5. **Restart Terminal:**
    Open a new PowerShell or Command Prompt window. Now you can run `rql` anywhere! 🎯
 </details>
 
