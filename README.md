@@ -28,6 +28,7 @@
 - [Built With](#%EF%B8%8F-built-with)
 - [Installation](#-installation)
 - [Building from Source (Developers & Termux Users)](#%EF%B8%8F-building-from-source)
+- [How Raqule Runs](#%EF%B8%8F-how-raqule-runs)
 - [Available Flags](#-available-flags)
 - [Filtering Files & Folders](#%EF%B8%8F-filtering-files--folders)
 - [Project Config File](#%EF%B8%8F-project-config-file)
@@ -52,6 +53,8 @@
 * **Safe by Default:** Automatically skips secrets (`.env`, `.npmrc`, ...), lock files, build outputs, and dependency folders.
 
 * **Token Estimation:** Get an estimated token count for the generated output before you paste it into your LLM.
+
+* **Max Tokens Safety Guard:** Set a hard token limit with `-m/--max` — if the output would exceed it, Raqule stops and errors out instead of dumping an oversized file on you.
 
 * **Fast & Lightweight:** Built with pure Node.js asynchronous APIs for maximum speed.
 
@@ -191,6 +194,18 @@ npm link
 
 ---
 
+## ▶️ How Raqule Runs
+
+Running `rql` always walks through the same interactive flow, regardless of which flags you pass:
+
+1. **Directory prompt** — asks `Your directory path :` (defaults to `./`). There's no flag to pass this non-interactively yet; just hit Enter to accept the default.
+2. **Config file prompt** — only on a project's first run, if no `raqule-config.toml` exists yet (see [Project Config File](#%EF%B8%8F-project-config-file)).
+3. **Output path prompt** — asks `Your output path :` (defaults to `./`), unless you passed `-P`/`--print-only` or `-C`/`--copy-only`.
+
+After that, your flags decide what happens with the gathered content (copy, print, show tokens, write the file) — see the table below.
+
+---
+
 ## 🚩 Available Flags
 
 | Flag | Description |
@@ -198,16 +213,16 @@ npm link
 | `-a, --all` | Don't apply the *default ignore list* (e.g. .git, **.env**, node_modules, target). **Not recommended & Unsafe** |
 | `-c, --copy` | Copy the result/output to your clipboard |
 | `-C, --copy-only` | Copy the result/output to your clipboard only, without printing it |
-| `-d, --depth <number>` | Set the maximum folder depth (whole number, 1 or greater) |
-| `-e, --exclude <names...>` | Skip these names in the contents, and do not expand them in the tree |
-| `--ce, --content-exclude <names...>` | Skip these names in the contents only |
-| `--te, --tree-exclude <names...>` | Do not expand these folders in the tree (they are still listed) |
-| `-i, --include <names...>` | Remove these names from the ignore list, even if ignored by default or by `-e` |
-| `--ci, --content-include <names...>` | Same as `--include`, but for the contents only |
-| `--ti, --tree-include <names...>` | Same as `--include`, but for the tree only |
-| `-m, --max <number>` | Set the maximum output tokens (whole number, 1 or greater) |
-| `-p, --print` | Print the result in the terminal, and also save it to `context.md` |
-| `-P, --print-only` | Print the result in the terminal only, without creating `context.md` |
+| `-d, --depth <number>` | Set the maximum folder depth. Accepts a whole number (1 or greater), or `infinity`/`inf`/`max` (case-insensitive) for no limit. Defaults to `Infinity` (no limit) when omitted |
+| `-e, --exclude <patterns...>` | Skip these names/patterns in the contents, and do not expand them in the tree |
+| `--ce, --content-exclude <patterns...>` | Skip these names/patterns in the contents only |
+| `--te, --tree-exclude <patterns...>` | Do not expand these folders in the tree (they are still listed) |
+| `-i, --include <patterns...>` | Remove these names/patterns from the ignore list, even if ignored by default or by `-e` |
+| `--ci, --content-include <patterns...>` | Same as `--include`, but for the contents only |
+| `--ti, --tree-include <patterns...>` | Same as `--include`, but for the tree only |
+| `-m, --max <number>` | Set the maximum output tokens (whole number, 1 or greater). Implies `-T` (always shows the token count). If the output exceeds this limit, Raqule throws an error and aborts instead of writing/printing anything |
+| `-p, --print` | Print the result in the terminal, and also save it to `raqule-output.md` |
+| `-P, --print-only` | Print the result in the terminal only, without creating `raqule-output.md` |
 | `-t, --tree` | Generate only the project tree, without file contents |
 | `-T, --tokens` | Display estimated total token count for the output |
 | `-V, --version` | Output the current version |
@@ -223,7 +238,7 @@ rql -d 2
 rql -e docs tests
 # Include the dist folder even though it is ignored by default
 rql -i dist
-# Print the result in the terminal without creating context.md
+# Print the result in the terminal without creating raqule-output.md
 rql -P
 # Generate project tree structure only
 rql -t
@@ -242,6 +257,8 @@ Raqule matches names/extensions by glob patterns (for example `**/*.test.js` or 
 Raqule builds **two separate ignore lists** — one for the tree, one for the contents — each combining your project's [config file](#%EF%B8%8F-project-config-file), the [default ignore list](#-default-ignore-list) (unless `-a` is used), your general exclude flag (`-e`), and that list's own scoped flag (`--te` for the tree, `--ce` for the contents).
 
 Your include flags then **win**, removing matching names from each list (`-i` removes from both; `--ti`/`--ci` remove from one scope only). So `-i` always beats everything else. 💪
+
+Matching an include flag against an ignored pattern works **both ways**: it removes the ignored pattern if your include matches it, *or* if it matches your include. For example, `-i dist` removes both a plain `dist` entry **and** a `dist/**` entry from the ignore list, since `dist` matches the start of `dist/**`.
 
 > **Note:** In the tree, an ignored folder is still listed by name, but its children are not expanded (ignored files are always listed). In the contents, ignored files/folders are skipped completely.
 
@@ -282,16 +299,29 @@ You can still combine it with CLI flags: the config file's ignore list, the defa
 
 ## 🙈 Default Ignore List
 
-Unless you pass `-a`, Raqule skips the following names:
+Unless you pass `-a`, Raqule skips the following names/patterns, grouped by ecosystem:
 
-* **Version control:** `.git`, `.svn`, `.hg`
-* **Dependencies & builds:** `node_modules`, `dist`, `build`, `coverage`, `target`, `vendor`, `out`, `obj`, `.next`, `.nuxt`, `.output`, `.turbo`, `.cache`
-* **Lock files:** `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `bun.lockb`, `Cargo.lock`
-* **Secrets & credentials:** `.env` (and variants), `.npmrc`, `.pypirc`, `.netrc`, `.aws`, `.azure`, `.gcloud`, `.kube`
-* **Language & tool caches:** `__pycache__`, `.venv`, `venv`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `.gradle`, `.idea`, `.dart_tool`, `.pub-cache`, `.bundle`, `DerivedData`, `CMakeFiles`, and more
-* **OS junk:** `.DS_Store`, `Thumbs.db`
+| Group | Ignored names/patterns |
+| :--- | :--- |
+| **Version control** | `.git`, `.svn`, `.hg` |
+| **JavaScript / Node** | `node_modules`, `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `bun.lockb`, `.npm`, `dist`, `build`, `coverage`, `.next`, `.nuxt`, `.output`, `.turbo`, `.cache`, `*.tsbuildinfo`, `*.log`, `npm-debug.log*`, `yarn-debug.log*`, `yarn-error.log*` |
+| **Secrets & credentials** | `.env*` (see note below), `.npmrc`, `.pypirc`, `.netrc` |
+| **Cloud & infra** | `.aws`, `.azure`, `.gcloud`, `.kube`, `.terraform`, `*.tfstate`, `*.tfstate.*` |
+| **Rust** | `target`, `Cargo.lock` |
+| **Python** | `__pycache__`, `*.pyc`, `.venv`, `venv`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `.tox`, `*.egg-info` |
+| **Java** | `.gradle`, `.idea`, `*.class`, `*.jar` |
+| **Go** | `vendor` |
+| **.NET** | `obj`, `*.user` |
+| **C / C++** | `CMakeFiles`, `cmake-build-debug`, `cmake-build-release`, `*.o`, `*.obj` |
+| **Dart / Flutter** | `.dart_tool`, `.pub-cache`, `*.g.dart` |
+| **Ruby** | `.bundle` |
+| **Swift** | `DerivedData`, `*.xcuserstate` |
+| **OS junk & editor files** | `.DS_Store`, `Thumbs.db`, `*.swp`, `*.swo`, `*~` |
+| **Raqule itself** | `raqule-output.md` (so Raqule never re-ingests its own output on the next run) |
 
-Also, `LICENSE` files are shortened to their first 3 lines so they don't waste your LLM's context. 🧠
+> **Note:** `.env*` ignores every `.env`-style file (`.env`, `.env.local`, `.env.production`, ...) **except** `.env.example` and `.env.sample`, which are kept since they rarely hold real secrets.
+
+Also, `LICENSE`, `LICENSE.md`, and `LICENSE.txt` files are shortened to their first 3 lines so they don't waste your LLM's context (other extensions, like `LICENSE.json`, are left untouched). 🧠
 
 ---
 
@@ -366,6 +396,8 @@ Raqule
 - **`utils/`** — standalone features (clipboard, tokens).
 - **`helpers/`** — small secondary modules, not a feature on their own.
 - **`shared/`** — cross-cutting values everyone uses but nobody **"owns"** (constants).
+
+> **For contributors:** `src/main.js` orchestrates everything through a small **trigger pipeline** — an ordered array of `{ condition, action }` steps (build file contents → count tokens → check `-m/--max` → copy → print → show token count → write the output file). Each step only runs if its `condition()` returns true, so adding a new behavior usually means adding one more trigger rather than editing existing logic.
 
 > **Note:** `raqule-config.toml` is only created if you say yes to the prompt on first run inside a project — see [Project Config File](#%EF%B8%8F-project-config-file).
 
