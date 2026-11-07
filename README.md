@@ -6,7 +6,7 @@
 
 ![license](https://img.shields.io/github/license/OmarPGH/Raqule?label=License&color=%2300A8FF)
 
-![language](https://img.shields.io/badge/Language-JavaScript%20ES20Module-%23EAB308)
+![language](https://img.shields.io/badge/Language-JavaScript%20ES%20Modules-%23EAB308)
 
 ![runtime](https://img.shields.io/badge/Runtime-Node.js%20Latest-%23E83B3B)
 
@@ -94,13 +94,13 @@ Head over to the [Releases](../../releases) page and download the latest release
 
 | OS | Architecture | File Name |
 | :--- | :--- | :--- |
-| **Linux** | x64 (Intel/AMD) | `Raqule-vX.Y.Z-linux-x64` |
-| **Linux** | ARM64 | `Raqule-vX.Y.Z-linux-arm64` |
-| **macOS** | Apple Silicon (M1/M2/M3/M4) | `Raqule-vX.Y.Z-macos-arm64` |
-| **Windows** | x64 (Intel/AMD) | `Raqule-vX.Y.Z-win-x64.exe` |
-| **Windows** | ARM64 | `Raqule-vX.Y.Z-win-arm64.exe` |
+| **Linux** | x64 (Intel/AMD) | `Raqule-vX.Y.Z-linux-x64-release.zip` |
+| **Linux** | ARM64 | `Raqule-vX.Y.Z-linux-arm64-release.zip` |
+| **macOS** | Apple Silicon (M1/M2/M3/M4) | `Raqule-vX.Y.Z-macos-arm64-release.zip` |
+| **Windows** | x64 (Intel/AMD) | `Raqule-vX.Y.Z-win-x64-release.zip` |
+| **Windows** | ARM64 | `Raqule-vX.Y.Z-win-arm64-release.zip` |
 
-*(Optional)* You can verify the integrity of your downloaded binary using the provided `SHA256SUMS` file.
+Each ZIP contains the standalone executable and a copy of `README.md`. **Extract the ZIP first**, then follow the setup steps below.\n\n*(Optional)* You can verify the integrity of the downloaded ZIP files using the provided `SHA256SUMS` file. The checksums are for the ZIP archives, not the extracted executables.
 
 ---
 
@@ -114,9 +114,9 @@ To run Raqule seamlessly from **any terminal directory** using the shortcut comm
 1. **Make it executable & rename to `rql`:**
    ```bash
    # Make the file executable
-   chmod +x Raqule-*-linux-*
+   unzip Raqule-vX.Y.Z-linux-x64-release.zip\n   chmod +x Raqule-vX.Y.Z-linux-x64
    # Rename it for easier use
-   mv Raqule-*-linux-* rql
+   mv Raqule-vX.Y.Z-linux-x64 rql
    ```
 2. **Move to system PATH (Recommended):**
    ```bash
@@ -132,9 +132,9 @@ Now you can run `rql` anywhere! 🎯
 1. **Make it executable & rename to `rql`:**
    ```bash
    # Make the file executable
-   chmod +x Raqule-*-macos-arm64
+   unzip Raqule-vX.Y.Z-macos-arm64-release.zip\n   chmod +x Raqule-vX.Y.Z-macos-arm64
    # Rename it for easier use
-   mv Raqule-*-macos-arm64 rql
+   mv Raqule-vX.Y.Z-macos-arm64 rql
    ```
 2. **Move to system PATH (Recommended):**
    ```bash
@@ -152,8 +152,13 @@ Now you can run `rql` anywhere! 🎯
 <details>
 <summary><b>🪟 Windows Setup</b></summary>
 
-1. **Rename the File:**
-   Rename `Raqule-vX.Y.Z-win-x64.exe` (or `win-arm64`) to `rql.exe`.
+1. **Extract the downloaded ZIP** (right-click it and choose **Extract All**, or use PowerShell):
+   ```powershell
+   Expand-Archive Raqule-vX.Y.Z-win-x64-release.zip
+   ```
+   *(For Windows ARM64, use the `win-arm64` ZIP name instead.)*
+2. **Rename the executable:**
+   Rename `Raqule-vX.Y.Z-win-x64.exe` (or `win-arm64.exe`) to `rql.exe`.
 2. **Move to a Safe Folder:**
    Create a dedicated folder, for example: `C:\Program Files\Raqule\`, and place `rql.exe` inside it.
 3. **Add to System PATH:**
@@ -180,7 +185,7 @@ rql --version
 ## 🛠️ Building from Source
 > **Developers and Termux Users**
 
-If you prefer installing from source code using Node.js & NPM (Node.js 22 or later is required; the release binaries themselves are built with Node.js 26):
+If you prefer installing from source code using Node.js & NPM (Node.js 22.13.0 or later is required; the release binaries themselves are built with Node.js 26):
 ```bash
 # Clone repository
 git clone https://github.com/OmarPGH/Raqule.git
