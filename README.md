@@ -25,18 +25,18 @@
 ## 📋 Table of Contents
 
 - [Features](#-features)
-- [Built With](#%EF%B8%8F-built-with)
+- [Built With](#️-built-with)
 - [Installation](#-installation)
-- [Building from Source (Developers & Termux Users)](#%EF%B8%8F-building-from-source)
-- [How Raqule Runs](#%EF%B8%8F-how-raqule-runs)
+- [Building from Source (Developers & Termux Users)](#️-building-from-source)
+- [How Raqule Runs](#️-how-raqule-runs)
 - [Available Flags](#-available-flags)
-- [Filtering Files & Folders](#%EF%B8%8F-filtering-files--folders)
-- [Project Config File](#%EF%B8%8F-project-config-file)
+- [Filtering Files & Folders](#️-filtering-files--folders)
+- [Project Config File](#️-project-config-file)
 - [Default Ignore List](#-default-ignore-list)
 - [Project Structure](#-project-structure)
 - [Contributing](#-contributing)
-- [License](#%EF%B8%8F-license)
-- [Author](#%E2%80%8D-author)
+- [License](#️-license)
+- [Author](#‍-author)
 
 ---
 
@@ -44,15 +44,15 @@
 
 * **Visual Project Tree:** Generates a structured directory tree so LLMs instantly understand your architecture.
 
-* **Smart File Gathering:** Appends all relevant source code files sequentially with code block formatting.
+* **Smart File Gathering:** Appends all relevant source code files sequentially with code block formatting. Recognized binary files are skipped and represented by a placeholder instead of having their contents read.
 
 * **Fine-Grained Filtering:** Exclude or include files/folders globally, or separately for the tree and the contents.
 
-* **Per-Project Config File:** Optionally sets up a `raqule-config.toml` in your project (you'll be prompted on first run) so you can persist custom ignore rules without retyping flags every run.
+* **Per-Project Config File:** Optionally sets up a `raqule-config.toml` in your project (you'll be prompted whenever the file is missing) so you can persist custom ignore rules without retyping flags every run.
 
-* **Safe by Default:** Automatically skips secrets (`.env`, `.npmrc`, ...), lock files, build outputs, and dependency folders.
+* **Safe by Default:** Automatically skips secrets (`.env`, `.npmrc`, ...), common dependency lock files, build outputs, and dependency folders.
 
-* **Token Estimation:** Get an estimated token count for the generated output before you paste it into your LLM.
+* **Token Estimation:** Get an estimated token count for the generated output before you paste it into your LLM. The estimate uses OpenAI's `o200k_base` encoding, so counts may differ from the tokenizers used by Claude, Gemini, or other models.
 
 * **Max Tokens Safety Guard:** Set a hard token limit with `-m/--max` — if the output would exceed it, Raqule stops and errors out instead of dumping an oversized file on you.
 
@@ -189,7 +189,8 @@ rql --version
 ## 🛠️ Building from Source
 > **Developers and Termux Users**
 
-If you prefer installing from source code using Node.js & NPM (Node.js 22.13.0 or later is required; the release binaries themselves are built with Node.js 26):
+Raqule is primarily developed and its release binaries are built with **Node.js 26**, which is the recommended runtime. Some older Node.js versions may also work, but they are not the target environment and compatibility is not guaranteed. You may encounter errors or features that do not work as expected when using an older version.
+
 ```bash
 # Clone repository
 git clone https://github.com/OmarPGH/Raqule.git
@@ -208,10 +209,10 @@ npm link
 Running `rql` always walks through the same interactive flow, regardless of which flags you pass:
 
 1. **Directory prompt** — asks `Your directory path :` (defaults to `./`). There's no flag to pass this non-interactively yet; just hit Enter to accept the default.
-2. **Config file prompt** — only on a project's first run, if no `raqule-config.toml` exists yet (see [Project Config File](#%EF%B8%8F-project-config-file)).
+2. **Config file prompt** — appears whenever the selected project has no `raqule-config.toml` file (see [Project Config File](#️-project-config-file)). If you decline to create it, you'll be asked again on the next run while the file is still missing.
 3. **Output path prompt** — asks `Your output path :` (defaults to `./`), unless you passed `-P`/`--print-only` or `-C`/`--copy-only`.
 
-After that, your flags decide what happens with the gathered content (copy, print, show tokens, write the file) — see the table below.
+After that, your flags decide what happens with the gathered content (copy, print, show tokens, write the file). **By default, Raqule saves the result to `raqule-output.md`**; the `-P` and `-C` flags are the options that prevent the output file from being created. See the flag table below.
 
 ---
 
@@ -220,8 +221,8 @@ After that, your flags decide what happens with the gathered content (copy, prin
 | Flag | Description |
 | :--- | :--- |
 | `-a, --all` | Don't apply the *default ignore list* (e.g. .git, **.env**, node_modules, target). **Not recommended & Unsafe** |
-| `-c, --copy` | Copy the result/output to your clipboard |
-| `-C, --copy-only` | Copy the result/output to your clipboard only, without printing it |
+| `-c, --copy` | Copy the result/output to your clipboard, and also save it to `raqule-output.md` |
+| `-C, --copy-only` | Copy the result/output to your clipboard only, without creating `raqule-output.md` |
 | `-d, --depth <value>` | Set the maximum folder depth. Accepts a whole number (1 or greater), or `infinity`/`inf`/`max` (case-insensitive) for no limit. Defaults to `Infinity` (no limit) when omitted |
 | `-e, --exclude <patterns...>` | Skip these names/patterns in the contents, and do not expand them in the tree |
 | `--ce, --content-exclude <patterns...>` | Skip these names/patterns in the contents only |
@@ -263,7 +264,7 @@ rql --ce "src/secrets/**"
 
 Raqule matches names/extensions by glob patterns (for example `**/*.test.js` or `src/secrets/**`).
 
-Raqule builds **two separate ignore lists** — one for the tree, one for the contents — each combining your project's [config file](#%EF%B8%8F-project-config-file), the [default ignore list](#-default-ignore-list) (unless `-a` is used), your general exclude flag (`-e`), and that list's own scoped flag (`--te` for the tree, `--ce` for the contents).
+Raqule builds **two separate ignore lists** — one for the tree, one for the contents — each combining your project's [config file](#️-project-config-file), the [default ignore list](#-default-ignore-list) (unless `-a` is used), your general exclude flag (`-e`), and that list's own scoped flag (`--te` for the tree, `--ce` for the contents).
 
 Your include flags then **win**, removing matching names from each list (`-i` removes from both; `--ti`/`--ci` remove from one scope only). So `-i` always beats everything else. 💪
 
@@ -278,7 +279,7 @@ Your include flags then **win**, removing matching names from each list (`-i` re
 
 ## ⚙️ Project Config File
 
-The first time you run Raqule inside a project, it checks that directory for a `raqule-config.toml` file. If one doesn't already exist, it'll ask you:
+Raqule checks the selected project directory for a `raqule-config.toml` file every time you run it. If the file doesn't exist, it'll ask you:
 
 ```
 Do you want to add a config file : (y/N)
@@ -298,7 +299,7 @@ ignore = ["docs", "*.test.js", "src/secrets/**"]
 
 With the config above, every `rql` run in that project will automatically skip the `docs` folder, any `*.test.js` file, and everything inside `src/secrets/`, on top of the default ignore list — no extra flags needed. 🧠
 
-You can still combine it with CLI flags: the config file's ignore list, the default list, and your `-e` flags all merge together, and `-i` can still remove any of them — see [Filtering Files & Folders](#%EF%B8%8F-filtering-files--folders) above.
+You can still combine it with CLI flags: the config file's ignore list, the default list, and your `-e` flags all merge together, and `-i` can still remove any of them — see [Filtering Files & Folders](#️-filtering-files--folders) above.
 
 > **Tip:** Commit `raqule-config.toml` to your repo so teammates get the same ignore rules automatically.
 
@@ -326,7 +327,9 @@ Unless you pass `-a`, Raqule skips the following names/patterns, grouped by ecos
 | **OS junk & editor files** | `.DS_Store`, `Thumbs.db`, `*.swp`, `*.swo`, `*~` |
 | **Raqule itself** | `raqule-output.md` (so Raqule never re-ingests its own output on the next run) |
 
-> **Note:** `.env*` ignores every `.env`-style file (`.env`, `.env.local`, `.env.production`, ...) **except** `.env.example` and `.env.sample`, which are kept since they rarely hold real secrets.
+> **Note:** The default list includes common dependency lock files such as `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `bun.lockb`, and `Cargo.lock`; it does not automatically ignore every lock-file format.
+>
+> `.env*` ignores every `.env`-style file (`.env`, `.env.local`, `.env.production`, ...) **except** `.env.example` and `.env.sample`, which are kept since they rarely hold real secrets.
 
 Also, `LICENSE`, `LICENSE.md`, and `LICENSE.txt` files are shortened to their first 3 lines so they don't waste your LLM's context (other extensions, like `LICENSE.json`, are left untouched). 🧠
 
@@ -406,7 +409,7 @@ Raqule
 
 > **For contributors:** `src/main.js` runs the whole flow as an ordered list of small steps, so adding a new behavior usually means adding one more step rather than editing existing logic.
 
-> **Note:** `raqule-config.toml` is only created if you say yes to the prompt on first run inside a project — see [Project Config File](#%EF%B8%8F-project-config-file).
+> **Note:** `raqule-config.toml` is created only if you accept the prompt; if it remains absent, Raqule asks again on the next run inside that project — see [Project Config File](#️-project-config-file).
 
 ---
 
