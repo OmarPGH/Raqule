@@ -258,8 +258,6 @@ Raqule builds **two separate ignore lists** — one for the tree, one for the co
 
 Your include flags then **win**, removing matching names from each list (`-i` removes from both; `--ti`/`--ci` remove from one scope only). So `-i` always beats everything else. 💪
 
-Matching an include flag against an ignored pattern works **both ways**: it removes the ignored pattern if your include matches it, *or* if it matches your include. For example, `-i dist` removes both a plain `dist` entry **and** a `dist/**` entry from the ignore list, since `dist` matches the start of `dist/**`.
-
 > **Note:** In the tree, an ignored folder is still listed by name, but its children are not expanded (ignored files are always listed). In the contents, ignored files/folders are skipped completely.
 
 > ⚠️ **Shell Warning:** When using glob patterns with `*` directly in your terminal (e.g. `rql -e src/**/*.js`), your shell (Bash/Zsh) might expand the pattern itself *before* Raqule even sees it, causing unexpected results. Always wrap patterns in quotes to be safe:
@@ -397,7 +395,7 @@ Raqule
 - **`helpers/`** — small secondary modules, not a feature on their own.
 - **`shared/`** — cross-cutting values everyone uses but nobody **"owns"** (constants).
 
-> **For contributors:** `src/main.js` orchestrates everything through a small **trigger pipeline** — an ordered array of `{ condition, action }` steps (build file contents → count tokens → check `-m/--max` → copy → print → show token count → write the output file). Each step only runs if its `condition()` returns true, so adding a new behavior usually means adding one more trigger rather than editing existing logic.
+> **For contributors:** `src/main.js` runs the whole flow as an ordered list of small steps, so adding a new behavior usually means adding one more step rather than editing existing logic.
 
 > **Note:** `raqule-config.toml` is only created if you say yes to the prompt on first run inside a project — see [Project Config File](#%EF%B8%8F-project-config-file).
 
