@@ -213,7 +213,7 @@ After that, your flags decide what happens with the gathered content (copy, prin
 | `-a, --all` | Don't apply the *default ignore list* (e.g. .git, **.env**, node_modules, target). **Not recommended & Unsafe** |
 | `-c, --copy` | Copy the result/output to your clipboard |
 | `-C, --copy-only` | Copy the result/output to your clipboard only, without printing it |
-| `-d, --depth <number>` | Set the maximum folder depth. Accepts a whole number (1 or greater), or `infinity`/`inf`/`max` (case-insensitive) for no limit. Defaults to `Infinity` (no limit) when omitted |
+| `-d, --depth <value>` | Set the maximum folder depth. Accepts a whole number (1 or greater), or `infinity`/`inf`/`max` (case-insensitive) for no limit. Defaults to `Infinity` (no limit) when omitted |
 | `-e, --exclude <patterns...>` | Skip these names/patterns in the contents, and do not expand them in the tree |
 | `--ce, --content-exclude <patterns...>` | Skip these names/patterns in the contents only |
 | `--te, --tree-exclude <patterns...>` | Do not expand these folders in the tree (they are still listed) |
