@@ -135,7 +135,8 @@ Now you can run `rql` anywhere! 🎯
 1. **Make it executable & rename to `rql`:**
    ```bash
    # Make the file executable
-   unzip Raqule-vX.Y.Z-macos-arm64-release.zip\n   chmod +x Raqule-vX.Y.Z-macos-arm64
+   unzip Raqule-vX.Y.Z-macos-arm64-release.zip
+   chmod +x Raqule-vX.Y.Z-macos-arm64
    # Rename it for easier use
    mv Raqule-vX.Y.Z-macos-arm64 rql
    ```
