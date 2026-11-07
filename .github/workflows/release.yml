@@ -199,7 +199,7 @@ jobs:
             arch: arm64
 
           - target: macos-arm64
-            runner: macos-14
+            runner: macos-latest
             os: macos
             arch: arm64
 
