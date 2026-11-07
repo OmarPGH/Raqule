@@ -1,5 +1,6 @@
 import { program, InvalidArgumentError } from 'commander';
 import packageInfo from '../../package.json' with { type: 'json' }
+import { outputFileName } from '../shared/constants.js';
 
 function parseDepth(value) {
     const normalized = value.toLowerCase();
@@ -42,8 +43,8 @@ async function readFlags() {
         .option('--ci, --content-include <patterns...>', 'Same as --include, but for the contents only')
         .option('--ti, --tree-include <patterns...>', 'Same as --include, but for the tree only')
         .option('-m, --max <number>', 'Set the maximum output tokens (whole number, 1 or greater)', parseMax)
-        .option('-p, --print', 'Print the result in the terminal, and also save it to context.md')
-        .option('-P, --print-only', 'Print the result in the terminal only, without creating context.md')
+        .option('-p, --print', `Print the result in the terminal, and also save it to ${outputFileName}`)
+        .option('-P, --print-only', `Print the result in the terminal only, without creating ${outputFileName}`)
         .option('-t, --tree', 'Generate only the project tree, without file contents')
         .option('-T, --tokens', 'Display estimated total token count for the output');
 
