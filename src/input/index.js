@@ -1,2 +1,2 @@
 export * from './flags.js';
-export * from './prompts.js';
+export * from './ask.js';

@@ -1,14 +1,13 @@
 import { configurationDefault } from '../shared/index.js';
-import { addConfigFileInput } from '../input/index.js';
 import { validateConfig } from './validation.js';
 import { writeConfig } from './io.js';
 import { readConfig } from './io.js';
 
-export async function config(dirPath) {
+export async function config(dirPath, askAbout) {
 	let configuration = await readConfig(dirPath);
 	if (!configuration) {
 		configuration = configurationDefault;
-		if (await addConfigFileInput()) {
+		if (await askAbout.addConfigFile()) {
 			await writeConfig(dirPath, configurationDefault);
 		}
 	}

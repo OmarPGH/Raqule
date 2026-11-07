@@ -1,16 +1,17 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { clipboardWrite, countTokens, formatTree, formatFiles, formatFinal } from './utils/index.js';
-import { readFlags, dirPathInput, outputPathInput } from './input/index.js';
+import { readFlags, buildAskAbout } from './input/index.js';
 import { gather, generateTree } from './core/index.js';
 import { validateDirectory } from './validation/index.js';
 import { outputFileName } from './shared/index.js';
 import { config } from './config/index.js';
 
 async function main() {
-	const flags = await readFlags();
-	const dirPath = await validateDirectory(await dirPathInput());
-	const configuration = await config(dirPath);
+	const flags = readFlags();
+	const askAbout = buildAskAbout(flags);
+	const dirPath = await validateDirectory(path.resolve(await askAbout.dirPath()));
+	const configuration = await config(dirPath, askAbout);
 	const treeStr = await generateTree(dirPath, flags, configuration);
 	const formattedTree = formatTree(treeStr);
 	let finalContent = formattedTree;
@@ -64,7 +65,7 @@ async function main() {
 		{
 			condition: () => !flags.printOnly && !flags.copyOnly,
 			action: async () => {
-				const outputPath = await validateDirectory(await outputPathInput());
+				const outputPath = await validateDirectory(await askAbout.outputPath());
 				const outputFile = path.resolve(outputPath, outputFileName);
 				await fs.promises.writeFile(outputFile, finalContent);
 				console.log(`\nYou'll find ${outputFileName} file at [ ${path.join(outputPath, outputFileName)} | ${outputFile} ]`);

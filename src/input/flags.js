@@ -28,7 +28,7 @@ function parseMax(value) {
     return parsed;
 }
 
-async function readFlags() {
+function readFlags() {
     program
         .description(packageInfo.description)
         .version(packageInfo.version)
@@ -46,7 +46,8 @@ async function readFlags() {
         .option('-p, --print', `Print the result in the terminal, and also save it to ${outputFileName}`)
         .option('-P, --print-only', `Print the result in the terminal only, without creating ${outputFileName}`)
         .option('-t, --tree', 'Generate only the project tree, without file contents')
-        .option('-T, --tokens', 'Display estimated total token count for the output');
+        .option('-T, --tokens', 'Display estimated total token count for the output')
+        .option('-y, --yes', "Automatically selects 'y' or 'yes' for confirmations and chooses the default option for prompts");
 
     program.parse(process.argv);
 
