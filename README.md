@@ -233,6 +233,7 @@ rql ./my-project -o ./out -D
 | `-c, --copy` | Copy the result/output to your clipboard, and also save it to `raqule-output.md` |
 | `-C, --copy-only` | Copy the result/output to your clipboard only, without creating `raqule-output.md` |
 | `-d, --depth <value>` | Set the maximum folder depth. Accepts a whole number (1 or greater), or `infinity`/`inf`/`max` (case-insensitive) for no limit. Defaults to `Infinity` (no limit) when omitted |
+| `-D, --default` | Skip every prompt and use its default answer (non-interactive)|
 | `-e, --exclude <patterns...>` | Skip these names/patterns in the contents, and do not expand them in the tree |
 | `--ce, --content-exclude <patterns...>` | Skip these names/patterns in the contents only |
 | `--te, --tree-exclude <patterns...>` | Do not expand these folders in the tree (they are still listed) |
@@ -245,7 +246,6 @@ rql ./my-project -o ./out -D
 | `-P, --print-only` | Print the result in the terminal only, without creating `raqule-output.md` |
 | `-t, --tree` | Generate only the project tree, without file contents |
 | `-T, --tokens` | Display estimated total token count for the output |
-| `-D, --default` | Skip every prompt and use its default answer (non-interactive). Note that the config file prompt defaults to "no" |
 | `-V, --version` | Output the current version |
 | `-h, --help` | Display help information |
 
