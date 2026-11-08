@@ -216,11 +216,11 @@ After that, your flags decide what happens with the gathered content (copy, prin
 
 ### Non-Interactive Mode
 
-Raqule never asks anything when it's running in a script, a CI job, or a pipe (no TTY), and every prompt falls back to its default. You can also force this anywhere with `-y`/`--yes`, and pass the answers directly:
+Raqule never asks anything when it's running in a script, a CI job, or a pipe (no TTY), and every prompt falls back to its default. You can also force this anywhere with `-D`/`--default`, and pass the answers directly:
 
 ```bash
 # No prompts at all: gather ./my-project and save raqule-output.md into ./out
-rql ./my-project -o ./out -y
+rql ./my-project -o ./out -D
 ```
 
 ---
@@ -245,7 +245,7 @@ rql ./my-project -o ./out -y
 | `-P, --print-only` | Print the result in the terminal only, without creating `raqule-output.md` |
 | `-t, --tree` | Generate only the project tree, without file contents |
 | `-T, --tokens` | Display estimated total token count for the output |
-| `-y, --yes` | Skip every prompt and use its default answer (non-interactive). Note that the config file prompt defaults to "no" |
+| `-D, --default` | Skip every prompt and use its default answer (non-interactive). Note that the config file prompt defaults to "no" |
 | `-V, --version` | Output the current version |
 | `-h, --help` | Display help information |
 

@@ -19,9 +19,9 @@ describe('buildAskAbout (non-interactive mode)', () => {
 		assert.equal(await askAbout.outputPath(), './out');
 	});
 
-	it('returns the defaults without prompting when --yes is passed', async () => {
+	it('returns the defaults without prompting when --default is passed', async () => {
 		process.stdin.isTTY = true;
-		const askAbout = buildAskAbout({ yes: true });
+		const askAbout = buildAskAbout({ default: true });
 		assert.equal(await askAbout.dirPath(), './');
 		assert.equal(await askAbout.outputPath(), './');
 		assert.equal(await askAbout.addConfigFile(), false);
@@ -35,8 +35,8 @@ describe('buildAskAbout (non-interactive mode)', () => {
 		assert.equal(await askAbout.addConfigFile(), false);
 	});
 
-	it('still lets explicit arguments win over --yes defaults', async () => {
-		const askAbout = buildAskAbout({ yes: true, directory: './a', output: './b' });
+	it('still lets explicit arguments win over --default defaults', async () => {
+		const askAbout = buildAskAbout({ default: true, directory: './a', output: './b' });
 		assert.equal(await askAbout.dirPath(), './a');
 		assert.equal(await askAbout.outputPath(), './b');
 	});

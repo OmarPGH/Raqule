@@ -49,7 +49,7 @@ function readFlags() {
         .option('-P, --print-only', `Print the result in the terminal only, without creating ${outputFileName}`)
         .option('-t, --tree', 'Generate only the project tree, without file contents')
         .option('-T, --tokens', 'Display estimated total token count for the output')
-        .option('-y, --yes', "Automatically selects 'y' or 'yes' for confirmations and chooses the default option for prompts");
+        .option('-D, --default', 'Skip every prompt and use its default answer (non-interactive)');
 
     program.parse(process.argv);
 
