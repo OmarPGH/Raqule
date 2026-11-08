@@ -208,19 +208,26 @@ npm link
 
 Running `rql` walks through an interactive flow unless you skip the prompts (see [Non-Interactive Mode](#non-interactive-mode)):
 
-1. **Directory prompt** — asks `Your directory path :` (defaults to `./`). Pass the directory as an argument (`rql ./my-project`) to skip it.
-2. **Config file prompt** — appears whenever the selected project has no `raqule-config.toml` file (see [Project Config File](#️-project-config-file)). If you decline to create it, you'll be asked again on the next run while the file is still missing.
+1. **Directory prompt** — asks `Your directory path :` (defaults to `./`). Pass `--dp`/`--directory-path` (`rql --dp ./my-project`) to skip it.
+2. **Config file prompt** — appears whenever the selected project has no `raqule-config.toml` file (see [Project Config File](#️-project-config-file)). If you decline to create it, you'll be asked again on the next run while the file is still missing. Pass `--cc`/`--create-config` to create it without being asked.
 3. **Output path prompt** — asks `Your output path :` (defaults to `./`), unless you passed `-o`/`--output`, `-P`/`--print-only` or `-C`/`--copy-only`.
 
 After that, your flags decide what happens with the gathered content (copy, print, show tokens, write the file). **By default, Raqule saves the result to `raqule-output.md`**; the `-P` and `-C` flags are the options that prevent the output file from being created. See the flag table below.
 
 ### Non-Interactive Mode
 
-Raqule never asks anything when it's running in a script, a CI job, or a pipe (no TTY), and every prompt falls back to its default. You can also force this anywhere with `-D`/`--default`, and pass the answers directly:
+There are two ways to skip the prompts:
+
+* **`-D` / `--default`**: skips every prompt and uses its default answer (current directory as the input, current directory as the output, and no config file). It takes the defaults only, so it can't be combined with `-n`, `--dp`, `-o` or `--cc`.
+* **`-n` / `--non-interactive`**: never asks anything, but lets you answer the prompts with their own flags: `--dp`/`--directory-path` (the directory to gather), `-o`/`--output` (where to save the output) and `--cc`/`--create-config` (create the config file). Whatever you don't pass uses its default.
+
+Raqule also skips the prompts by itself when it runs without a TTY (a script, a CI job, or a pipe).
 
 ```bash
-# No prompts at all: gather ./my-project and save raqule-output.md into ./out
-rql ./my-project -o ./out -D
+# Everything with its default answer
+rql -D
+# No prompts, with your own answers: gather ./my-project, save the output into ./out, and create the config file
+rql -n --dp ./my-project -o ./out --cc
 ```
 
 ---
@@ -232,8 +239,10 @@ rql ./my-project -o ./out -D
 | `-a, --all` | Don't apply the *default ignore list* (e.g. .git, **.env**, node_modules, target). **Not recommended & Unsafe** |
 | `-c, --copy` | Copy the result/output to your clipboard, and also save it to `raqule-output.md` |
 | `-C, --copy-only` | Copy the result/output to your clipboard only, without creating `raqule-output.md` |
+| `--cc, --create-config` | Create the `raqule-config.toml` file without asking, when the project doesn't have one |
 | `-d, --depth <value>` | Set the maximum folder depth. Accepts a whole number (1 or greater), or `infinity`/`inf`/`max` (case-insensitive) for no limit. Defaults to `Infinity` (no limit) when omitted |
-| `-D, --default` | Skip every prompt and use its default answer (non-interactive)|
+| `-D, --default` | Skip every prompt and use its default answer. Takes defaults only, so it can't be combined with `-n`, `--dp`, `-o` or `--cc`. Note that the config file prompt defaults to "no" |
+| `--dp, --directory-path <path>` | Project directory to gather. Skips the directory prompt |
 | `-e, --exclude <patterns...>` | Skip these names/patterns in the contents, and do not expand them in the tree |
 | `--ce, --content-exclude <patterns...>` | Skip these names/patterns in the contents only |
 | `--te, --tree-exclude <patterns...>` | Do not expand these folders in the tree (they are still listed) |
@@ -241,6 +250,7 @@ rql ./my-project -o ./out -D
 | `--ci, --content-include <patterns...>` | Same as `--include`, but for the contents only |
 | `--ti, --tree-include <patterns...>` | Same as `--include`, but for the tree only |
 | `-m, --max <number>` | Set the maximum output tokens (whole number, 1 or greater). Implies `-T` (always shows the token count). If the output exceeds this limit, Raqule throws an error and aborts instead of writing/printing anything |
+| `-n, --non-interactive` | Never ask anything. Prompts answered by `--dp`, `-o` or `--cc` use your answer, the rest use their default |
 | `-o, --output <path>` | Folder where `raqule-output.md` will be saved. Skips the output path prompt |
 | `-p, --print` | Print the result in the terminal, and also save it to `raqule-output.md` |
 | `-P, --print-only` | Print the result in the terminal only, without creating `raqule-output.md` |
