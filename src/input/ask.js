@@ -3,15 +3,15 @@ import { input, confirm } from '@inquirer/prompts';
 let flags;
 
 async function ask(type, message, defaultVal) {
-	if (flags.yes === true) return defaultVal;
+	if (flags.yes === true || !process.stdin.isTTY) return defaultVal;
 	return await type({ message: message, default: defaultVal });
 }
 
 export function buildAskAbout(flagsInput) {
 	flags = flagsInput;
 	return {
-		dirPath: () => ask(input, "Your directory path :", "./"),
-		outputPath: () => ask(input, "Your output path :", "./"),
+		dirPath: () => flags.directory ?? ask(input, "Your directory path :", "./"),
+		outputPath: () => flags.output ?? ask(input, "Your output path :", "./"),
 		addConfigFile: () => ask(confirm, "Do you want to add a config file :", false),
 	};
 }

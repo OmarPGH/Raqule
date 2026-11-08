@@ -32,6 +32,7 @@ function readFlags() {
     program
         .description(packageInfo.description)
         .version(packageInfo.version)
+        .argument('[directory]', 'Project directory to gather. Skips the directory prompt when provided')
         .option('-a, --all', "Don't apply the default ignore list (e.g. .git, .env, node_modules, target). Not recommended & Unsafe")
         .option('-c, --copy', 'Copy the result/output to your clipboard')
         .option('-C, --copy-only', 'Copy the result/output to your clipboard only, without printing it')
@@ -43,6 +44,7 @@ function readFlags() {
         .option('--ci, --content-include <patterns...>', 'Same as --include, but for the contents only')
         .option('--ti, --tree-include <patterns...>', 'Same as --include, but for the tree only')
         .option('-m, --max <number>', 'Set the maximum output tokens (whole number, 1 or greater)', parseMax)
+        .option('-o, --output <path>', `Folder where ${outputFileName} will be saved. Skips the output path prompt when provided`)
         .option('-p, --print', `Print the result in the terminal, and also save it to ${outputFileName}`)
         .option('-P, --print-only', `Print the result in the terminal only, without creating ${outputFileName}`)
         .option('-t, --tree', 'Generate only the project tree, without file contents')
@@ -51,7 +53,7 @@ function readFlags() {
 
     program.parse(process.argv);
 
-    return program.opts();
+    return { ...program.opts(), directory: program.args[0] };
 }
 
 export { readFlags };

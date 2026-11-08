@@ -206,13 +206,22 @@ npm link
 
 ## ▶️ How Raqule Runs
 
-Running `rql` always walks through the same interactive flow, regardless of which flags you pass:
+Running `rql` walks through an interactive flow unless you skip the prompts (see [Non-Interactive Mode](#non-interactive-mode)):
 
-1. **Directory prompt** — asks `Your directory path :` (defaults to `./`). There's no flag to pass this non-interactively yet; just hit Enter to accept the default.
+1. **Directory prompt** — asks `Your directory path :` (defaults to `./`). Pass the directory as an argument (`rql ./my-project`) to skip it.
 2. **Config file prompt** — appears whenever the selected project has no `raqule-config.toml` file (see [Project Config File](#️-project-config-file)). If you decline to create it, you'll be asked again on the next run while the file is still missing.
-3. **Output path prompt** — asks `Your output path :` (defaults to `./`), unless you passed `-P`/`--print-only` or `-C`/`--copy-only`.
+3. **Output path prompt** — asks `Your output path :` (defaults to `./`), unless you passed `-o`/`--output`, `-P`/`--print-only` or `-C`/`--copy-only`.
 
 After that, your flags decide what happens with the gathered content (copy, print, show tokens, write the file). **By default, Raqule saves the result to `raqule-output.md`**; the `-P` and `-C` flags are the options that prevent the output file from being created. See the flag table below.
+
+### Non-Interactive Mode
+
+Raqule never asks anything when it's running in a script, a CI job, or a pipe (no TTY), and every prompt falls back to its default. You can also force this anywhere with `-y`/`--yes`, and pass the answers directly:
+
+```bash
+# No prompts at all: gather ./my-project and save raqule-output.md into ./out
+rql ./my-project -o ./out -y
+```
 
 ---
 
@@ -231,10 +240,12 @@ After that, your flags decide what happens with the gathered content (copy, prin
 | `--ci, --content-include <patterns...>` | Same as `--include`, but for the contents only |
 | `--ti, --tree-include <patterns...>` | Same as `--include`, but for the tree only |
 | `-m, --max <number>` | Set the maximum output tokens (whole number, 1 or greater). Implies `-T` (always shows the token count). If the output exceeds this limit, Raqule throws an error and aborts instead of writing/printing anything |
+| `-o, --output <path>` | Folder where `raqule-output.md` will be saved. Skips the output path prompt |
 | `-p, --print` | Print the result in the terminal, and also save it to `raqule-output.md` |
 | `-P, --print-only` | Print the result in the terminal only, without creating `raqule-output.md` |
 | `-t, --tree` | Generate only the project tree, without file contents |
 | `-T, --tokens` | Display estimated total token count for the output |
+| `-y, --yes` | Skip every prompt and use its default answer (non-interactive). Note that the config file prompt defaults to "no" |
 | `-V, --version` | Output the current version |
 | `-h, --help` | Display help information |
 
