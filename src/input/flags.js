@@ -36,6 +36,7 @@ function readFlags() {
         .option('-c, --copy', 'Copy the result/output to your clipboard')
         .option('-C, --copy-only', 'Copy the result/output to your clipboard only, without printing it')
         .option('-d, --depth <value>', 'Set the maximum folder depth. Accepts a whole number (1 or greater), or `infinity`/`inf`/`max` (case-insensitive) for no limit. Defaults to `Infinity` (no limit) when omitted', parseDepth, Infinity)
+        .option('-D, --default', "Automatically selects the default option for prompts & confirmations")
         .option('-e, --exclude <patterns...>', 'Skip these names in the contents, and do not expand them in the tree')
         .option('--ce, --content-exclude <patterns...>', 'Skip these names in the contents only')
         .option('--te, --tree-exclude <patterns...>', 'Do not expand these folders in the tree (they are still listed)')
@@ -47,7 +48,6 @@ function readFlags() {
         .option('-P, --print-only', `Print the result in the terminal only, without creating ${outputFileName}`)
         .option('-t, --tree', 'Generate only the project tree, without file contents')
         .option('-T, --tokens', 'Display estimated total token count for the output')
-        .option('-y, --yes', "Automatically selects 'y' or 'yes' for confirmations and chooses the default option for prompts");
 
     program.parse(process.argv);
 
