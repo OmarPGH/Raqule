@@ -2,8 +2,11 @@ import { input, confirm } from '@inquirer/prompts';
 
 let flags;
 
-async function ask(type, message, defaultVal, flagValue) {
-	if (flagValue !== undefined) return flagValue;
+async function ask(type, message, defaultVal, presetValue) {
+	if (presetValue !== undefined) {
+		console.log(`\n${message}\n"${presetValue}" has been selected as the preset value`);
+		return presetValue;
+	}
 	if (flags.default || flags.nonInteractive) {
 		console.log(`\n${message}\n"${defaultVal}" has been selected as the default`);
 		return defaultVal;
