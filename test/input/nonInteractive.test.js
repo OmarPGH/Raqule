@@ -52,14 +52,14 @@ describe('non-interactive CLI flags', () => {
 			assert.match(fs.readFileSync(path.join(projectDir, outputFileName), 'utf8'), /a\.js/);
 		});
 
-		it('does not create a config file when --cc is not passed', () => {
+		it('does not create a config file when -C/--create-config is not passed', () => {
 			runCli(['-n']);
 
 			assert.equal(fs.existsSync(path.join(projectDir, configFileName)), false);
 		});
 
-		it('creates the config file when --cc is passed', () => {
-			const result = runCli(['-n', '--cc']);
+		it('creates the config file when -C/--create-config is passed', () => {
+			const result = runCli(['-n', '-C']);
 
 			assert.equal(result.status, 0);
 			assert.ok(fs.existsSync(path.join(projectDir, configFileName)));
@@ -99,29 +99,29 @@ describe('non-interactive CLI flags', () => {
 			assert.match(result.stderr, /isn't a directory/);
 		});
 
-		// -P writes no file, so a bad -o is harmless and must not fail the run.
-		it('ignores -o and writes no file when -P is passed', () => {
-			const result = runCli(['-n', '-o', missingDir, '-P']);
+		// -s skips saving, so a bad -o is harmless and must not fail the run.
+		it('ignores -o and writes no file when -s is passed (with -p to still print)', () => {
+			const result = runCli(['-n', '-o', missingDir, '-s', '-p']);
 
 			assert.equal(result.status, 0);
 			assert.match(result.stdout, /a\.js/);
 			assert.equal(outputExistsIn(projectDir), false);
 		});
 
-		// The exit code is not asserted: -C needs a system clipboard, which CI machines often lack.
-		it('does not validate -o and writes no file when -C is passed', () => {
-			const result = runCli(['-n', '-o', missingDir, '-C']);
+		// The exit code is not asserted: -c needs a system clipboard, which CI machines often lack.
+		it('does not validate -o and writes no file when -s -c is passed', () => {
+			const result = runCli(['-n', '-o', missingDir, '-s', '-c']);
 
 			assert.doesNotMatch(result.stderr, /Directory not found/);
 			assert.equal(outputExistsIn(projectDir), false);
 		});
 
-		it('does not overwrite an existing config file when --cc is passed', () => {
+		it('does not overwrite an existing config file when -C/--create-config is passed', () => {
 			const configPath = path.join(projectDir, configFileName);
 			const originalConfig = 'ignore = ["custom-folder"]\n';
 			fs.writeFileSync(configPath, originalConfig);
 
-			const result = runCli(['-n', '--cc']);
+			const result = runCli(['-n', '-C']);
 
 			assert.equal(result.status, 0);
 			assert.equal(fs.readFileSync(configPath, 'utf8'), originalConfig);
@@ -139,7 +139,7 @@ describe('non-interactive CLI flags', () => {
 		for (const [flagName, extraArgs] of [
 			['-o', ['-o', '.']],
 			['--dp', ['--dp', '.']],
-			['--cc', ['--cc']],
+			['-C', ['-C']],
 		]) {
 			it(`rejects ${flagName} with an error and a non-zero exit code`, () => {
 				const result = runCli(['-D', ...extraArgs]);
@@ -153,7 +153,7 @@ describe('non-interactive CLI flags', () => {
 		for (const [flagName, extraArgs] of [
 			['-o', ['-o', '.']],
 			['--dp', ['--dp', '.']],
-			['--cc', ['--cc']],
+			['-C', ['-C']],
 		]) {
 			it(`rejects ${flagName} even when it is written before -D`, () => {
 				const result = runCli([...extraArgs, '-D']);
