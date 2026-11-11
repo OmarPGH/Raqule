@@ -47,7 +47,7 @@ function readFlags() {
         .option('--ti, --tree-include <patterns...>', 'Same as --include, but for the tree only')
         .option('-m, --max <number>', 'Set the maximum output tokens (whole number, 1 or greater)', parseMax)
         .option('-n, --non-interactive', 'Never prompt: use the values passed by flags (-o, --dp, -C) and the defaults for the rest')
-        .addOption(new Option('-o, --output <path>', `The folder where ${outputFileName} is saved (skips the output path prompt)`).conflict('skipSave'))
+        .addOption(new Option('-o, --output <path>', `The folder where ${outputFileName} is saved (skips the output path prompt)`).conflicts('skipSave'))
         .option('-p, --print', `Print the result in the terminal`)
         .addOption(new Option('-t, --tree', 'Generate only the project tree, without file contents').conflicts(['contentExclude', 'contentInclude']))
         .option('-T, --tokens', 'Display estimated total token count for the output');
