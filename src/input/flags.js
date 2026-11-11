@@ -56,6 +56,10 @@ function readFlags() {
 
     const flags = program.opts();
 
+    if (flags.skipSave && !flags.copy && !flags.print) {
+        program.error('error: -s/--skip-save requires -c/--copy or -p/--print, otherwise the result has nowhere to go.');
+    }
+
     if (flags.default && flags.nonInteractive) {
         console.warn('Warning: -n/--non-interactive is redundant when -D/--default is used. Running with -D.');
     }
