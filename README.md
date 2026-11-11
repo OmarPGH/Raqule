@@ -48,7 +48,7 @@
 
 * **Fine-Grained Filtering:** Exclude or include files/folders globally, or separately for the tree and the contents.
 
-* **Per-Project Config File:** Optionally sets up a `raqule-config.toml` in your project (you'll be prompted whenever the file is missing, or pass `--cc` to create it without asking) so you can persist custom ignore rules without retyping flags every run.
+* **Per-Project Config File:** Optionally sets up a `raqule-config.toml` in your project (you'll be prompted whenever the file is missing; pass `--cc` to create it without asking, or use `-n`/`-D` to skip the prompt and answer "No") so you can persist custom ignore rules without retyping flags every run.
 
 * **Safe by Default:** Automatically skips secrets (`.env`, `.npmrc`, ...), common dependency lock files, build outputs, and dependency folders.
 
@@ -211,7 +211,7 @@ npm link
 By default, running `rql` walks through an interactive flow, and each prompt can be skipped with its own flag:
 
 1. **Directory prompt** — asks `Your directory path :` (defaults to `./`). Skip it with `--dp`/`--directory-path <path>`.
-2. **Config file prompt** — appears whenever the selected project has no `raqule-config.toml` file (see [Project Config File](#️-project-config-file)). If you decline to create it, you'll be asked again on the next run while the file is still missing. Skip it with `--cc`/`--create-config` to create the file without asking.
+2. **Config file prompt** — appears whenever the selected project has no `raqule-config.toml` file (see [Project Config File](#️-project-config-file)). If you decline to create it, you'll be asked again on the next run while the file is still missing. Skip it with `--cc`/`--create-config` to create the file without asking, or use `-n`/`-D` to skip the prompt and answer "No".
 3. **Output path prompt** — asks `Your output path :` (defaults to `./`), unless you passed `-P`/`--print-only` or `-C`/`--copy-only`. Skip it with `-o`/`--output <path>`.
 
 After that, your flags decide what happens with the gathered content (copy, print, show tokens, write the file). **By default, Raqule saves the result to `raqule-output.md`**; the `-P` and `-C` flags are the options that prevent the output file from being created. See the flag table below.
