@@ -107,6 +107,25 @@ describe('non-interactive CLI flags', () => {
 			assert.match(result.stdout, /a\.js/);
 			assert.equal(outputExistsIn(projectDir), false);
 		});
+
+		// The exit code is not asserted: -C needs a system clipboard, which CI machines often lack.
+		it('does not validate -o and writes no file when -C is passed', () => {
+			const result = runCli(['-n', '-o', missingDir, '-C']);
+
+			assert.doesNotMatch(result.stderr, /Directory not found/);
+			assert.equal(outputExistsIn(projectDir), false);
+		});
+
+		it('does not overwrite an existing config file when --cc is passed', () => {
+			const configPath = path.join(projectDir, configFileName);
+			const originalConfig = 'ignore = ["custom-folder"]\n';
+			fs.writeFileSync(configPath, originalConfig);
+
+			const result = runCli(['-n', '--cc']);
+
+			assert.equal(result.status, 0);
+			assert.equal(fs.readFileSync(configPath, 'utf8'), originalConfig);
+		});
 	});
 
 	describe('-D / --default', () => {
@@ -124,6 +143,20 @@ describe('non-interactive CLI flags', () => {
 		]) {
 			it(`rejects ${flagName} with an error and a non-zero exit code`, () => {
 				const result = runCli(['-D', ...extraArgs]);
+
+				assert.equal(result.status, 1);
+				assert.match(result.stderr, /cannot be used with/);
+				assert.equal(outputExistsIn(projectDir), false);
+			});
+		}
+
+		for (const [flagName, extraArgs] of [
+			['-o', ['-o', '.']],
+			['--dp', ['--dp', '.']],
+			['--cc', ['--cc']],
+		]) {
+			it(`rejects ${flagName} even when it is written before -D`, () => {
+				const result = runCli([...extraArgs, '-D']);
 
 				assert.equal(result.status, 1);
 				assert.match(result.stderr, /cannot be used with/);

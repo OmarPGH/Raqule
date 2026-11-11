@@ -1,8 +1,6 @@
 import { input, confirm } from '@inquirer/prompts';
 
-let flags;
-
-async function ask(type, message, defaultVal, presetValue) {
+async function ask(flags, type, message, defaultVal, presetValue) {
 	if (presetValue !== undefined) {
 		console.log(`\n${message}\n"${presetValue}" has been selected as the preset value`);
 		return presetValue;
@@ -14,11 +12,10 @@ async function ask(type, message, defaultVal, presetValue) {
 	return await type({ message: message, default: defaultVal });
 }
 
-export function buildAskAbout(flagsInput) {
-	flags = flagsInput;
+export function buildAskAbout(flags) {
 	return {
-		dirPath: () => ask(input, "Your directory path :", "./", flags.directoryPath),
-		outputPath: () => ask(input, "Your output path :", "./", flags.output),
-		addConfigFile: () => ask(confirm, "Do you want to add a config file :", false, flags.createConfig),
+		dirPath: () => ask(flags, input, "Your directory path :", "./", flags.directoryPath),
+		outputPath: () => ask(flags, input, "Your output path :", "./", flags.output),
+		addConfigFile: () => ask(flags, confirm, "Do you want to add a config file :", false, flags.createConfig),
 	};
 }

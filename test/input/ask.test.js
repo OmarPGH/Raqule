@@ -75,6 +75,26 @@ describe('buildAskAbout when no prompt should be shown', () => {
 		assert.equal(addConfigFile, true);
 	});
 
+	it('keeps each instance on its own flags when several are created in the same process', async () => {
+		const first = buildAskAbout({ directoryPath: '/project-a' });
+		const second = buildAskAbout({ directoryPath: '/project-b' });
+
+		const firstDirPath = await first.dirPath();
+		const secondDirPath = await second.dirPath();
+
+		assert.equal(firstDirPath, '/project-a');
+		assert.equal(secondDirPath, '/project-b');
+	});
+
+	it('does not leak a preset value from a later instance into an earlier one', async () => {
+		const first = buildAskAbout({ nonInteractive: true });
+		buildAskAbout({ nonInteractive: true, output: '/some/out' });
+
+		const outputPath = await first.outputPath();
+
+		assert.equal(outputPath, './');
+	});
+
 	it('tells the user whether each value came from a flag or from the default', async () => {
 		const askAbout = buildAskAbout({ nonInteractive: true, output: '/some/out' });
 
