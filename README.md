@@ -48,7 +48,7 @@
 
 * **Fine-Grained Filtering:** Exclude or include files/folders globally, or separately for the tree and the contents.
 
-* **Per-Project Config File:** Optionally sets up a `raqule-config.toml` in your project (you'll be prompted whenever the file is missing) so you can persist custom ignore rules without retyping flags every run.
+* **Per-Project Config File:** Optionally sets up a `raqule-config.toml` in your project (you'll be prompted whenever the file is missing; pass `--cc` to create it without asking, or use `-n`/`-D` to skip the prompt and answer "No") so you can persist custom ignore rules without retyping flags every run.
 
 * **Safe by Default:** Automatically skips secrets (`.env`, `.npmrc`, ...), common dependency lock files, build outputs, and dependency folders.
 
@@ -59,6 +59,8 @@
 * **Fast & Lightweight:** Built with pure Node.js asynchronous APIs for maximum speed.
 
 * **Interactive & CLI Ready:** Use interactive prompts or fast flags for quick execution.
+
+* **Non-Interactive Mode:** Run Raqule in CI pipelines, scripts, and automation without a single prompt, using `-n/--non-interactive` or `-D/--default`.
 
 ---
 
@@ -206,13 +208,30 @@ npm link
 
 ## ▶️ How Raqule Runs
 
-Running `rql` always walks through the same interactive flow, regardless of which flags you pass:
+By default, running `rql` walks through an interactive flow, and each prompt can be skipped with its own flag:
 
-1. **Directory prompt** — asks `Your directory path :` (defaults to `./`). There's no flag to pass this non-interactively yet; just hit Enter to accept the default.
-2. **Config file prompt** — appears whenever the selected project has no `raqule-config.toml` file (see [Project Config File](#️-project-config-file)). If you decline to create it, you'll be asked again on the next run while the file is still missing.
-3. **Output path prompt** — asks `Your output path :` (defaults to `./`), unless you passed `-P`/`--print-only` or `-C`/`--copy-only`.
+1. **Directory prompt** — asks `Your directory path :` (defaults to `./`). Skip it with `--dp`/`--directory-path <path>`.
+2. **Config file prompt** — appears whenever the selected project has no `raqule-config.toml` file (see [Project Config File](#️-project-config-file)). If you decline to create it, you'll be asked again on the next run while the file is still missing. Skip it with `--cc`/`--create-config` to create the file without asking, or use `-n`/`-D` to skip the prompt and answer "No".
+3. **Output path prompt** — asks `Your output path :` (defaults to `./`), unless you passed `-P`/`--print-only` or `-C`/`--copy-only`. Skip it with `-o`/`--output <path>`.
 
 After that, your flags decide what happens with the gathered content (copy, print, show tokens, write the file). **By default, Raqule saves the result to `raqule-output.md`**; the `-P` and `-C` flags are the options that prevent the output file from being created. See the flag table below.
+
+### Non-Interactive Mode
+
+Two flags let Raqule run without a single prompt, which is handy for CI pipelines, scripts, and automation:
+
+* **`-n, --non-interactive`** — never prompts. Any prompt you skipped with a flag (`--dp`, `-o`, `--cc`) uses your value, and every other prompt uses its default.
+* **`-D, --default`** — uses the default for every prompt. It can't be combined with `--dp`, `-o`, or `--cc` (Raqule prints an error and exits).
+
+If you pass both `-n` and `-D`, `-D` wins and Raqule prints a warning.
+
+| Prompt | Default |
+| :--- | :--- |
+| Directory path | `./` |
+| Output path | `./` |
+| Create a config file | No (the file is not created) |
+
+> **Note:** `-o` is ignored when `-P`/`--print-only` or `-C`/`--copy-only` is used, because no output file is written in that case.
 
 ---
 
@@ -223,7 +242,10 @@ After that, your flags decide what happens with the gathered content (copy, prin
 | `-a, --all` | Don't apply the *default ignore list* (e.g. .git, **.env**, node_modules, target). **Not recommended & Unsafe** |
 | `-c, --copy` | Copy the result/output to your clipboard, and also save it to `raqule-output.md` |
 | `-C, --copy-only` | Copy the result/output to your clipboard only, without creating `raqule-output.md` |
+| `--cc, --create-config` | Create `raqule-config.toml` if the project has none, without asking |
 | `-d, --depth <value>` | Set the maximum folder depth. Accepts a whole number (1 or greater), or `infinity`/`inf`/`max` (case-insensitive) for no limit. Defaults to `Infinity` (no limit) when omitted |
+| `-D, --default` | Automatically select the default option for every prompt. Can't be combined with `-o`, `--dp`, or `--cc` |
+| `--dp, --directory-path <path>` | The project directory to gather (skips the directory prompt) |
 | `-e, --exclude <patterns...>` | Skip these names/patterns in the contents, and do not expand them in the tree |
 | `--ce, --content-exclude <patterns...>` | Skip these names/patterns in the contents only |
 | `--te, --tree-exclude <patterns...>` | Do not expand these folders in the tree (they are still listed) |
@@ -231,6 +253,8 @@ After that, your flags decide what happens with the gathered content (copy, prin
 | `--ci, --content-include <patterns...>` | Same as `--include`, but for the contents only |
 | `--ti, --tree-include <patterns...>` | Same as `--include`, but for the tree only |
 | `-m, --max <number>` | Set the maximum output tokens (whole number, 1 or greater). Implies `-T` (always shows the token count). If the output exceeds this limit, Raqule throws an error and aborts instead of writing/printing anything |
+| `-n, --non-interactive` | Never prompt: use the values passed by flags (`-o`, `--dp`, `--cc`) and the defaults for the rest. See [Non-Interactive Mode](#non-interactive-mode) |
+| `-o, --output <path>` | The folder where `raqule-output.md` is saved (skips the output path prompt). Ignored with `-P` or `-C` |
 | `-p, --print` | Print the result in the terminal, and also save it to `raqule-output.md` |
 | `-P, --print-only` | Print the result in the terminal only, without creating `raqule-output.md` |
 | `-t, --tree` | Generate only the project tree, without file contents |
@@ -256,6 +280,12 @@ rql -t
 rql -T
 # Skip all files inside "src/secrets/" in the contents only (the tree is not affected)
 rql --ce "src/secrets/**"
+# Never prompt: use the defaults for everything (CI/scripts)
+rql -D
+# Never prompt, but choose the project folder and the output folder
+rql -n --dp ./my-project -o ./out
+# Never prompt, and create the config file if the project has none
+rql -n --cc
 ```
 
 ---
@@ -285,7 +315,7 @@ Raqule checks the selected project directory for a `raqule-config.toml` file eve
 Do you want to add a config file : (y/N)
 ```
 
-Say yes, and it creates one for you with:
+Say yes (or pass `--cc`/`--create-config` to skip the question), and it creates one for you with:
 
 ```toml
 ignore = []
@@ -376,9 +406,9 @@ Raqule
 │   │   ├── patterns.js
 │   │   └── resolver.js
 │   ├── input/
+│   │   ├── ask.js
 │   │   ├── flags.js
-│   │   ├── index.js
-│   │   └── prompts.js
+│   │   └── index.js
 │   ├── main.js
 │   ├── shared/
 │   │   ├── constants.js
@@ -396,6 +426,9 @@ Raqule
     │   └── specialFiles.test.js
     ├── ignore/
     │   └── resolver.test.js
+    ├── input/
+    │   ├── ask.test.js
+    │   └── nonInteractive.test.js
     ├── utils/
     │   ├── format.test.js
     │   └── tokens.test.js
