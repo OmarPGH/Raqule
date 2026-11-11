@@ -99,18 +99,32 @@ describe('non-interactive CLI flags', () => {
 			assert.match(result.stderr, /isn't a directory/);
 		});
 
-		// -s skips saving, so a bad -o is harmless and must not fail the run.
-		it('ignores -o and writes no file when -s is passed (with -p to still print)', () => {
+		it('rejects -o when -s is also passed because they conflict', () => {
 			const result = runCli(['-n', '-o', missingDir, '-s', '-p']);
+
+			assert.equal(result.status, 1);
+			assert.match(result.stderr, /cannot be used with/);
+			assert.equal(outputExistsIn(projectDir), false);
+		});
+
+		it('prints the result and writes no file when -s and -p are passed', () => {
+			const result = runCli(['-n', '-s', '-p']);
 
 			assert.equal(result.status, 0);
 			assert.match(result.stdout, /a\.js/);
 			assert.equal(outputExistsIn(projectDir), false);
 		});
 
+		it('fails when -s is used without -c or -p', () => {
+			const result = runCli(['-n', '-s']);
+
+			assert.equal(result.status, 1);
+			assert.match(result.stderr, /skip-save requires -c\/--copy or -p\/--print/);
+		});
+
 		// The exit code is not asserted: -c needs a system clipboard, which CI machines often lack.
-		it('does not validate -o and writes no file when -s -c is passed', () => {
-			const result = runCli(['-n', '-o', missingDir, '-s', '-c']);
+		it('writes no file when -s -c is passed', () => {
+			const result = runCli(['-n', '-s', '-c']);
 
 			assert.doesNotMatch(result.stderr, /Directory not found/);
 			assert.equal(outputExistsIn(projectDir), false);
