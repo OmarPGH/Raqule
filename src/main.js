@@ -9,8 +9,8 @@ import { config } from './config/index.js';
 
 async function main() {
 	const flags = readFlags();
-	const writesFile = !flags.printOnly && !flags.copyOnly;
-	if (writesFile && flags.output) await validateDirectory(flags.output);
+	const save = !flags.skipSave;
+	if (save && flags.output) await validateDirectory(flags.output);
 	const askAbout = buildAskAbout(flags);
 	const dirPath = await validateDirectory(path.resolve(await askAbout.dirPath()));
 	const configuration = await config(dirPath, askAbout);
@@ -45,13 +45,13 @@ async function main() {
 			}
 		},
 		{
-			condition: () => flags.copy || flags.copyOnly,
+			condition: () => flags.copy,
 			action: async () => {
 				await clipboardWrite(finalContent);
 			}
 		},
 		{
-			condition: () => flags.print || flags.printOnly,
+			condition: () => flags.print,
 			action: () => {
 				console.log(finalContent);
 				console.log('The Result is Above')
@@ -65,7 +65,7 @@ async function main() {
 			}
 		},
 		{
-			condition: () => writesFile,
+			condition: () => save,
 			action: async () => {
 				const outputPath = await validateDirectory(await askAbout.outputPath());
 				const outputFile = path.resolve(outputPath, outputFileName);

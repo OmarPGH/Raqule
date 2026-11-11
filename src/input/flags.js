@@ -34,8 +34,8 @@ function readFlags() {
         .version(packageInfo.version)
         .option('-a, --all', "Don't apply the default ignore list (e.g. .git, .env, node_modules, target). Not recommended & Unsafe")
         .option('-c, --copy', 'Copy the result/output to your clipboard')
-        .option('-C, --copy-only', 'Copy the result/output to your clipboard only, without printing it')
-        .option('--cc, --create-config', `Create ${configFileName} if the project has none, without asking`)
+        .option('-C, --create-config', `Create ${configFileName} if the project has none, without asking`)
+        .option('-s, --skip-save', `Skip saving the output file (${outputFileName})`)
         .option('-d, --depth <value>', 'Set the maximum folder depth. Accepts a whole number (1 or greater), or `infinity`/`inf`/`max` (case-insensitive) for no limit. Defaults to `Infinity` (no limit) when omitted', parseDepth, Infinity)
         .addOption(new Option('-D, --default', "Automatically selects the default option for prompts & confirmations").conflicts(['output', 'directoryPath', 'createConfig']))
         .option('--dp, --directory-path <path>', 'The project directory to gather (skips the directory prompt)')
@@ -46,11 +46,10 @@ function readFlags() {
         .option('--ci, --content-include <patterns...>', 'Same as --include, but for the contents only')
         .option('--ti, --tree-include <patterns...>', 'Same as --include, but for the tree only')
         .option('-m, --max <number>', 'Set the maximum output tokens (whole number, 1 or greater)', parseMax)
-        .option('-n, --non-interactive', 'Never prompt: use the values passed by flags (-o, --dp, --cc) and the defaults for the rest')
+        .option('-n, --non-interactive', 'Never prompt: use the values passed by flags (-o, --dp, -C) and the defaults for the rest')
         .option('-o, --output <path>', `The folder where ${outputFileName} is saved (skips the output path prompt)`)
-        .option('-p, --print', `Print the result in the terminal, and also save it to ${outputFileName}`)
-        .option('-P, --print-only', `Print the result in the terminal only, without creating ${outputFileName}`)
-        .option('-t, --tree', 'Generate only the project tree, without file contents')
+        .option('-p, --print', `Print the result in the terminal`)
+        .addOption(new Option('-t, --tree', 'Generate only the project tree, without file contents').conflicts(['contentExclude', 'contentInclude']))
         .option('-T, --tokens', 'Display estimated total token count for the output');
 
     program.parse(process.argv);
