@@ -7,7 +7,15 @@ const failingPrompts = {
 	confirm: async () => { throw new Error('unexpected prompt'); },
 };
 
-const buildWithoutPrompts = (flags) => buildAskAbout(flags, failingPrompts);
+const buildSilent = (flags) => buildAskAbout(flags, failingPrompts);
+
+async function askAll(askAbout) {
+	return {
+		dirPath: await askAbout.dirPath(),
+		outputPath: await askAbout.outputPath(),
+		addConfigFile: await askAbout.addConfigFile(),
+	};
+}
 
 describe('buildAskAbout when no prompt should be shown', () => {
 	let logs;
@@ -21,88 +29,67 @@ describe('buildAskAbout when no prompt should be shown', () => {
 		mock.restoreAll();
 	});
 
-	it('returns the preset flag values even without -n or -D', async () => {
-		const askAbout = buildWithoutPrompts({
+	it('returns preset flag values even without -n or -D', async () => {
+		const result = await askAll(buildSilent({
 			directoryPath: '/some/project',
 			output: '/some/out',
 			createConfig: true,
+		}));
+
+		assert.deepEqual(result, {
+			dirPath: '/some/project',
+			outputPath: '/some/out',
+			addConfigFile: true,
 		});
+	});
 
-		const dirPath = await askAbout.dirPath();
-		const outputPath = await askAbout.outputPath();
-		const addConfigFile = await askAbout.addConfigFile();
+	for (const [mode, flags] of [
+		['-n', { nonInteractive: true }],
+		['-D', { default: true }],
+	]) {
+		it(`uses defaults for every question when ${mode} is used alone`, async () => {
+			const result = await askAll(buildSilent(flags));
 
-		assert.equal(dirPath, '/some/project');
-		assert.equal(outputPath, '/some/out');
+			assert.deepEqual(result, {
+				dirPath: './',
+				outputPath: './',
+				addConfigFile: false,
+			});
+		});
+	}
+
+	it('with -n, prefers the passed flag and falls back to defaults for the rest', async () => {
+		const result = await askAll(buildSilent({ nonInteractive: true, output: '/some/out' }));
+
+		assert.deepEqual(result, {
+			dirPath: './',
+			outputPath: '/some/out',
+			addConfigFile: false,
+		});
+	});
+
+	it('with -n, answers yes to the config question when --cc is passed', async () => {
+		const addConfigFile = await buildSilent({ nonInteractive: true, createConfig: true }).addConfigFile();
 		assert.equal(addConfigFile, true);
 	});
 
-	it('uses the default for every question when -n is used alone', async () => {
-		const askAbout = buildWithoutPrompts({ nonInteractive: true });
+	it('keeps each instance on its own flags', async () => {
+		const first = buildSilent({ directoryPath: '/project-a' });
+		const second = buildSilent({ directoryPath: '/project-b' });
 
-		const dirPath = await askAbout.dirPath();
-		const outputPath = await askAbout.outputPath();
-		const addConfigFile = await askAbout.addConfigFile();
-
-		assert.equal(dirPath, './');
-		assert.equal(outputPath, './');
-		assert.equal(addConfigFile, false);
-	});
-
-	it('uses the default for every question when -D is used alone', async () => {
-		const askAbout = buildWithoutPrompts({ default: true });
-
-		const dirPath = await askAbout.dirPath();
-		const outputPath = await askAbout.outputPath();
-		const addConfigFile = await askAbout.addConfigFile();
-
-		assert.equal(dirPath, './');
-		assert.equal(outputPath, './');
-		assert.equal(addConfigFile, false);
-	});
-
-	it('with -n, uses the passed flag and the defaults for the other questions', async () => {
-		const askAbout = buildWithoutPrompts({ nonInteractive: true, output: '/some/out' });
-
-		const outputPath = await askAbout.outputPath();
-		const dirPath = await askAbout.dirPath();
-		const addConfigFile = await askAbout.addConfigFile();
-
-		assert.equal(outputPath, '/some/out');
-		assert.equal(dirPath, './');
-		assert.equal(addConfigFile, false);
-	});
-
-	it('with -n, answers yes to the config file question when --cc is passed', async () => {
-		const askAbout = buildWithoutPrompts({ nonInteractive: true, createConfig: true });
-
-		const addConfigFile = await askAbout.addConfigFile();
-
-		assert.equal(addConfigFile, true);
-	});
-
-	it('keeps each instance on its own flags when several are created in the same process', async () => {
-		const first = buildWithoutPrompts({ directoryPath: '/project-a' });
-		const second = buildWithoutPrompts({ directoryPath: '/project-b' });
-
-		const firstDirPath = await first.dirPath();
-		const secondDirPath = await second.dirPath();
-
-		assert.equal(firstDirPath, '/project-a');
-		assert.equal(secondDirPath, '/project-b');
+		assert.equal(await first.dirPath(), '/project-a');
+		assert.equal(await second.dirPath(), '/project-b');
 	});
 
 	it('does not leak a preset value from a later instance into an earlier one', async () => {
-		const first = buildWithoutPrompts({ nonInteractive: true });
-		buildWithoutPrompts({ nonInteractive: true, output: '/some/out' });
+		const first = buildSilent({ nonInteractive: true });
+		buildSilent({ nonInteractive: true, output: '/some/out' });
 
-		const outputPath = await first.outputPath();
-
-		assert.equal(outputPath, './');
+		assert.equal(await first.outputPath(), './');
 	});
 
 	it('tells the user whether each value came from a flag or from the default', async () => {
-		const askAbout = buildWithoutPrompts({ nonInteractive: true, output: '/some/out' });
+		const askAbout = buildSilent({ nonInteractive: true, output: '/some/out' });
 
 		await askAbout.outputPath();
 		await askAbout.dirPath();
@@ -127,10 +114,8 @@ describe('buildAskAbout when the user must be prompted', () => {
 		mock.restoreAll();
 	});
 
-	it('asks for the directory path with its message and default when no flag is passed', async () => {
-		const askAbout = buildAskAbout({}, fakePrompts);
-
-		const dirPath = await askAbout.dirPath();
+	it('asks for the directory path with its message and default', async () => {
+		const dirPath = await buildAskAbout({}, fakePrompts).dirPath();
 
 		assert.equal(dirPath, 'typed answer');
 		assert.equal(fakePrompts.input.mock.callCount(), 1);
@@ -140,10 +125,8 @@ describe('buildAskAbout when the user must be prompted', () => {
 		});
 	});
 
-	it('asks for the output path with its message and default when no flag is passed', async () => {
-		const askAbout = buildAskAbout({}, fakePrompts);
-
-		const outputPath = await askAbout.outputPath();
+	it('asks for the output path with its message and default', async () => {
+		const outputPath = await buildAskAbout({}, fakePrompts).outputPath();
 
 		assert.equal(outputPath, 'typed answer');
 		assert.deepEqual(fakePrompts.input.mock.calls[0].arguments[0], {
@@ -153,9 +136,7 @@ describe('buildAskAbout when the user must be prompted', () => {
 	});
 
 	it('asks the config file question as a confirmation that defaults to no', async () => {
-		const askAbout = buildAskAbout({}, fakePrompts);
-
-		const addConfigFile = await askAbout.addConfigFile();
+		const addConfigFile = await buildAskAbout({}, fakePrompts).addConfigFile();
 
 		assert.equal(addConfigFile, true);
 		assert.equal(fakePrompts.confirm.mock.callCount(), 1);
@@ -165,16 +146,12 @@ describe('buildAskAbout when the user must be prompted', () => {
 		});
 	});
 
-	for (const [modeName, flags] of [
+	for (const [mode, flags] of [
 		['-n', { nonInteractive: true }],
 		['-D', { default: true }],
 	]) {
-		it(`never prompts for any question when ${modeName} is used`, async () => {
-			const askAbout = buildAskAbout(flags, fakePrompts);
-
-			await askAbout.dirPath();
-			await askAbout.outputPath();
-			await askAbout.addConfigFile();
+		it(`never prompts for any question when ${mode} is used`, async () => {
+			await askAll(buildAskAbout(flags, fakePrompts));
 
 			assert.equal(fakePrompts.input.mock.callCount(), 0);
 			assert.equal(fakePrompts.confirm.mock.callCount(), 0);
@@ -182,14 +159,10 @@ describe('buildAskAbout when the user must be prompted', () => {
 	}
 
 	it('never prompts when every value is already given by a flag', async () => {
-		const askAbout = buildAskAbout(
+		await askAll(buildAskAbout(
 			{ directoryPath: '/some/project', output: '/some/out', createConfig: false },
 			fakePrompts,
-		);
-
-		await askAbout.dirPath();
-		await askAbout.outputPath();
-		await askAbout.addConfigFile();
+		));
 
 		assert.equal(fakePrompts.input.mock.callCount(), 0);
 		assert.equal(fakePrompts.confirm.mock.callCount(), 0);
