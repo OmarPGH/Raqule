@@ -255,7 +255,7 @@ If you pass both `-n` and `-D`, `-D` wins and Raqule prints a warning.
 | `-n, --non-interactive` | Never prompt: use the values passed by flags (`-o`, `--dp`, `-C`) and the defaults for the rest. See [Non-Interactive Mode](#non-interactive-mode) |
 | `-o, --output <path>` | The folder where `raqule-output.md` is saved (skips the output path prompt). Ignored with `-s` |
 | `-p, --print` | Print the result in the terminal, and also save it to `raqule-output.md` |
-| `-s, --skip-save` | Skip saving `raqule-output.md`. Combine it with `-p` or `-c` to print or copy the result only |
+| `-s, --skip-save` | Skip saving `raqule-output.md`. Requires `-p` or `-c` to print or copy the result instead, otherwise Raqule exits with an error |
 | `-t, --tree` | Generate only the project tree, without file contents. Can't be combined with `--ce` or `--ci` |
 | `-T, --tokens` | Display estimated total token count for the output |
 | `-V, --version` | Output the current version |
