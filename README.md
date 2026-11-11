@@ -450,9 +450,14 @@ Raqule
 
 Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) first. The short version:
 
-* Make precise, line-by-line edits (no full file overwrites).
+* Follow the DRY principle (Don't Repeat Yourself): don't copy and paste code, create a reusable helper instead and keep things in one place.
+* Make precise, line-by-line edits (no full file overwrites), so the diff is easy to review.
 * Keep your code simple and readable (no over-engineering).
-* Reply to review comments quickly, and apply requested changes within 2 days.
+* Reply to questions and review comments within 12-24 hours.
+* Apply requested changes within 2 days.
+* If an issue is assigned to you, open a Pull Request within 2 days.
+
+> A Pull Request that doesn't follow these rules is automatically closed/rejected.
 
 ---
 
