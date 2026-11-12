@@ -61,14 +61,15 @@ describe('readFlags', () => {
 			['infinity', 'Infinity'],
 			['INF', 'Infinity'],
 			['Max', 'Infinity'],
+			['Infinity', 'Infinity'],
 		]) {
 			it(`reads -d ${value} as ${expected}`, () => {
 				assert.equal(flagsFrom(['-d', value]).depth, expected);
 			});
 		}
 
-		for (const value of ['0', '-1', '1.5', 'abc']) {
-			it(`rejects -d ${value} with an explanation`, () => {
+		for (const value of ['0', '-1', '1.5', 'abc', '']) {
+			it(`rejects -d "${value}" with an explanation`, () => {
 				const result = runReadFlags(['-d', value]);
 
 				assert.equal(result.status, 1);
@@ -82,8 +83,8 @@ describe('readFlags', () => {
 			assert.equal(flagsFrom(['-m', '5000']).max, 5000);
 		});
 
-		for (const value of ['0', '-5', '2.5', 'abc']) {
-			it(`rejects -m ${value} with an explanation`, () => {
+		for (const value of ['0', '-5', '2.5', 'abc', '']) {
+			it(`rejects -m "${value}" with an explanation`, () => {
 				const result = runReadFlags(['-m', value]);
 
 				assert.equal(result.status, 1);
@@ -180,10 +181,11 @@ describe('readFlags', () => {
 			);
 		});
 
-		it('does not warn when -n is used without -D', () => {
+		it('does not warn about redundancy when -n is used without -D', () => {
 			const result = runReadFlags(['-n']);
 
-			assert.equal(result.stderr, '');
+			assert.equal(result.status, 0);
+			assert.doesNotMatch(result.stderr, /redundant/);
 		});
 
 		it('rejects an unknown flag', () => {

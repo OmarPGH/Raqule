@@ -23,5 +23,7 @@ export function createTempProject(files) {
 }
 
 export function removeTempProject(rootDir) {
+	if (!rootDir) return;
+
 	fs.rmSync(rootDir, { recursive: true, force: true });
 }

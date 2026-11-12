@@ -64,6 +64,23 @@ describe('generateTree', () => {
 		});
 	});
 
+	describe('root directory', () => {
+		it('matches path patterns against the given root when drawing a sub folder', async () => {
+			projectDir = createTempProject({ 'src/generated/x.js': '', 'src/keep/y.js': '' });
+
+			const tree = await generateTree(
+				path.join(projectDir, 'src'),
+				baseFlags,
+				{ ignore: ['src/generated'] },
+				projectDir,
+			);
+
+			assert.ok(tree.includes('generated/'));
+			assert.equal(tree.includes('x.js'), false);
+			assert.ok(tree.includes('y.js'));
+		});
+	});
+
 	describe('depth', () => {
 		const files = { 'a.js': '', 'src/b.js': '', 'src/deep/c.js': '' };
 

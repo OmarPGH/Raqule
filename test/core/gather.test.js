@@ -51,6 +51,29 @@ describe('gather', () => {
 		});
 	});
 
+	describe('root directory', () => {
+		it('computes relative paths from the given root when gathering a sub folder', async () => {
+			projectDir = createTempProject({ 'src/a.js': 'a' });
+
+			const result = await gather(path.join(projectDir, 'src'), baseFlags, configurationDefault, projectDir);
+
+			assert.equal(result['a.js'].relativePath, 'src/a.js');
+		});
+
+		it('matches path patterns against the given root, not the gathered sub folder', async () => {
+			projectDir = createTempProject({ 'src/a.js': 'a', 'src/b.js': 'b' });
+
+			const result = await gather(
+				path.join(projectDir, 'src'),
+				baseFlags,
+				{ ignore: ['src/a.js'] },
+				projectDir,
+			);
+
+			assert.deepEqual(Object.keys(result), ['b.js']);
+		});
+	});
+
 	describe('folder entries', () => {
 		it('nests children under their folder and uses forward slashes in relative paths', async () => {
 			const result = await gatherFrom({ 'src/util/a.js': 'x' });
