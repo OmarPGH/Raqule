@@ -1,9 +1,10 @@
 import { describe, it, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import path from 'node:path';
 import { generateTree } from '../../src/core/tree.js';
 import { configurationDefault } from '../../src/shared/constants.js';
-import { baseFlags, createTempProject, removeTempProject } from '../support/tempProject.js';
+import { baseFlags, createTempProject, removeTempProject, symlinkTestOptions } from '../support/tempProject.js';
 
 describe('generateTree', () => {
 	let projectDir;
@@ -15,10 +16,6 @@ describe('generateTree', () => {
 		const tree = await generateTree(projectDir, { ...baseFlags, ...flags }, configuration);
 
 		return tree.trimEnd().split('\n');
-	}
-
-	function mentions(lines, name) {
-		return lines.some((line) => line.includes(name));
 	}
 
 	describe('layout', () => {
@@ -75,9 +72,7 @@ describe('generateTree', () => {
 				projectDir,
 			);
 
-			assert.ok(tree.includes('generated/'));
-			assert.equal(tree.includes('x.js'), false);
-			assert.ok(tree.includes('y.js'));
+			assert.deepEqual(tree.trimEnd().split('\n'), ['src', '├── generated/', '└── keep/', '    └── y.js']);
 		});
 	});
 
@@ -87,34 +82,36 @@ describe('generateTree', () => {
 		it('lists the top level only, without expanding folders, when depth is 1', async () => {
 			const lines = await treeLinesOf(files, { depth: 1 });
 
-			assert.ok(lines.some((line) => line.endsWith('src/')));
-			assert.equal(mentions(lines, 'b.js'), false);
+			assert.deepEqual(lines.slice(1), ['├── a.js', '└── src/']);
 		});
 
 		it('expands exactly one folder level when depth is 2', async () => {
 			const lines = await treeLinesOf(files, { depth: 2 });
 
-			assert.ok(mentions(lines, 'b.js'));
-			assert.ok(mentions(lines, 'deep/'));
-			assert.equal(mentions(lines, 'c.js'), false);
+			assert.deepEqual(lines.slice(1), ['├── a.js', '└── src/', '    ├── b.js', '    └── deep/']);
 		});
 
 		it('expands every level when depth is unlimited', async () => {
 			const lines = await treeLinesOf(files);
 
-			assert.ok(mentions(lines, 'c.js'));
+			assert.deepEqual(lines.slice(1), [
+				'├── a.js',
+				'└── src/',
+				'    ├── b.js',
+				'    └── deep/',
+				'        └── c.js',
+			]);
 		});
 	});
 
 	describe('ignored folders', () => {
 		const files = { 'node_modules/dep.js': '', 'src/a.js': '' };
+		const defaultTreeLines = ['├── node_modules/', '└── src/', '    └── a.js'];
 
 		it('lists a default-ignored folder but does not expand it', async () => {
 			const lines = await treeLinesOf(files);
 
-			assert.ok(lines.some((line) => line.endsWith('node_modules/')));
-			assert.equal(mentions(lines, 'dep.js'), false);
-			assert.ok(mentions(lines, 'a.js'));
+			assert.deepEqual(lines.slice(1), defaultTreeLines);
 		});
 
 		it('does not expand a folder ignored by a path pattern from the config', async () => {
@@ -124,9 +121,7 @@ describe('generateTree', () => {
 				{ ignore: ['src/generated'] },
 			);
 
-			assert.ok(mentions(lines, 'generated/'));
-			assert.equal(mentions(lines, 'x.js'), false);
-			assert.ok(mentions(lines, 'y.js'));
+			assert.deepEqual(lines.slice(1), ['└── src/', '    ├── generated/', '    └── keep/', '        └── y.js']);
 		});
 
 		for (const [flagName, flags] of [
@@ -136,15 +131,14 @@ describe('generateTree', () => {
 			it(`does not expand a folder passed through ${flagName}`, async () => {
 				const lines = await treeLinesOf(files, flags);
 
-				assert.ok(lines.some((line) => line.endsWith('src/')));
-				assert.equal(mentions(lines, 'a.js'), false);
+				assert.deepEqual(lines.slice(1), ['├── node_modules/', '└── src/']);
 			});
 		}
 
 		it('still expands a folder passed through contentExclude, which only affects the contents', async () => {
 			const lines = await treeLinesOf(files, { contentExclude: ['src'] });
 
-			assert.ok(mentions(lines, 'a.js'));
+			assert.deepEqual(lines.slice(1), defaultTreeLines);
 		});
 
 		for (const [flagName, flags] of [
@@ -155,14 +149,55 @@ describe('generateTree', () => {
 			it(`expands a default-ignored folder when ${flagName} is passed`, async () => {
 				const lines = await treeLinesOf(files, flags);
 
-				assert.ok(mentions(lines, 'dep.js'));
+				assert.deepEqual(lines.slice(1), ['├── node_modules/', '│   └── dep.js', '└── src/', '    └── a.js']);
 			});
 		}
 
 		it('keeps a default-ignored folder collapsed when only contentInclude is passed', async () => {
 			const lines = await treeLinesOf(files, { contentInclude: ['node_modules'] });
 
-			assert.equal(mentions(lines, 'dep.js'), false);
+			assert.deepEqual(lines.slice(1), defaultTreeLines);
+		});
+	});
+
+	describe('unusual project layouts', () => {
+		it('lists names with spaces and unicode characters unchanged', async () => {
+			const lines = await treeLinesOf({ 'my folder/file name.js': '', 'café/ملف.js': '' });
+
+			assert.deepEqual(lines.slice(1), ['├── café/', '│   └── ملف.js', '└── my folder/', '    └── file name.js']);
+		});
+
+		it('shows only the root name for an empty project', async () => {
+			const lines = await treeLinesOf({});
+
+			assert.deepEqual(lines, [path.basename(projectDir)]);
+		});
+
+		it('expands a project nested 25 folders deep with matching indentation', async () => {
+			const folders = Array.from({ length: 25 }, (_, level) => `d${level}`);
+
+			const lines = await treeLinesOf({ [`${folders.join('/')}/bottom.js`]: '' });
+
+			assert.equal(lines.length, 27);
+			assert.equal(lines.at(-1), `${'    '.repeat(25)}└── bottom.js`);
+		});
+
+		it('lists a symlink to a folder like a file, without following it', symlinkTestOptions, async () => {
+			projectDir = createTempProject({ 'real/a.js': '' });
+			fs.symlinkSync(path.join(projectDir, 'real'), path.join(projectDir, 'link'));
+
+			const tree = await generateTree(projectDir, baseFlags, configurationDefault);
+
+			assert.deepEqual(tree.trimEnd().split('\n').slice(1), ['├── link', '└── real/', '    └── a.js']);
+		});
+
+		it('lists a broken symlink without failing', symlinkTestOptions, async () => {
+			projectDir = createTempProject({});
+			fs.symlinkSync(path.join(projectDir, 'missing'), path.join(projectDir, 'broken'));
+
+			const tree = await generateTree(projectDir, baseFlags, configurationDefault);
+
+			assert.deepEqual(tree.trimEnd().split('\n').slice(1), ['└── broken']);
 		});
 	});
 });

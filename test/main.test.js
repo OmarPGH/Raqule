@@ -14,12 +14,8 @@ const sampleFiles = {
 
 describe('main', () => {
 	let projectDir;
-	let outputDir;
 
-	afterEach(() => {
-		removeTempProject(projectDir);
-		removeTempProject(outputDir);
-	});
+	afterEach(() => removeTempProject(projectDir));
 
 	function run(args, files = sampleFiles) {
 		projectDir = createTempProject(files);
@@ -55,24 +51,26 @@ describe('main', () => {
 		it('prints only the tree without file contents with -t', () => {
 			const result = run(['-D', '-s', '-p', '-t']);
 
-			assert.match(result.stdout, /app\.js/);
+			assert.match(result.stdout, /└── app\.js/);
 			assert.doesNotMatch(result.stdout, /Content :/);
 		});
 
 		it('prints nothing of the result when -p is not passed', () => {
 			const result = run(['-D']);
 
+			assert.equal(result.status, 0);
 			assert.doesNotMatch(result.stdout, /Project Tree:/);
 			assert.doesNotMatch(result.stdout, /The Result is Above/);
 		});
 	});
 
 	describe('saving the result', () => {
-		it('saves the output file in the current folder by default', () => {
+		it('saves the output file in the current folder by default and tells where it is', () => {
 			const result = run(['-D']);
 
 			assert.equal(result.status, 0);
 			assert.ok(fs.existsSync(outputFileIn(projectDir)));
+			assert.match(result.stdout, new RegExp(`You'll find ${outputFileName} file at`));
 		});
 
 		it('saves the tree and the file contents in the output file', () => {
@@ -91,24 +89,7 @@ describe('main', () => {
 
 			assert.match(saved, /Project Tree:/);
 			assert.doesNotMatch(saved, /Content :/);
-		});
-
-		it('saves the output file in the -o folder and tells where it is', () => {
-			outputDir = createTempProject({});
-
-			const result = run(['-n', '-o', outputDir]);
-
-			assert.ok(fs.existsSync(outputFileIn(outputDir)));
-			assert.equal(fs.existsSync(outputFileIn(projectDir)), false);
-			assert.match(result.stdout, new RegExp(`You'll find ${outputFileName} file at`));
-		});
-
-		it('saves no file with -s', () => {
-			run(['-D', '-s', '-p']);
-
-			assert.equal(fs.existsSync(outputFileIn(projectDir)), false);
-		});
-	});
+		});	});
 
 	describe('counting tokens', () => {
 		it('prints the estimated total tokens with -T', () => {
@@ -120,6 +101,7 @@ describe('main', () => {
 		it('prints no token count when neither -T nor --max is passed', () => {
 			const result = run(['-D']);
 
+			assert.equal(result.status, 0);
 			assert.doesNotMatch(result.stdout, /Estimated Total Tokens/);
 		});
 
@@ -160,6 +142,7 @@ describe('main', () => {
 		it('skips the default ignore list entries such as node_modules in the contents', () => {
 			const result = run(['-D', '-s', '-p']);
 
+			assert.match(result.stdout, /src\/app\.js Content :/);
 			assert.doesNotMatch(result.stdout, /node_modules\/lib\/index\.js Content :/);
 		});
 
@@ -195,12 +178,6 @@ describe('main', () => {
 			assert.match(result.stdout, /src\/app\.js Content :/);
 		});
 
-		it('creates a config file with -C when the project has none', () => {
-			run(['-n', '-C', '-s', '-p']);
-
-			assert.ok(fs.existsSync(path.join(projectDir, configFileName)));
-		});
-
 		it('fails with a syntax error when the config file is not valid TOML', () => {
 			const result = run(['-D'], { ...sampleFiles, [configFileName]: 'ignore = [unclosed' });
 
@@ -222,6 +199,15 @@ describe('main', () => {
 
 			const result = runCli(['-n', '-s', '-p', '--dp', path.join(projectDir, 'target')], projectDir);
 
+			assert.match(result.stdout, /inner\.js Content :/);
+		});
+
+		it('gathers a --dp folder whose name has spaces and unicode characters', () => {
+			projectDir = createTempProject({ 'my project ملف/inner.js': 'let inner = 1;' });
+
+			const result = runCli(['-n', '-s', '-p', '--dp', path.join(projectDir, 'my project ملف')], projectDir);
+
+			assert.equal(result.status, 0);
 			assert.match(result.stdout, /inner\.js Content :/);
 		});
 

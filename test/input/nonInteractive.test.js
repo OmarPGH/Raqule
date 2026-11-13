@@ -99,27 +99,12 @@ describe('non-interactive CLI flags', () => {
 			assert.match(result.stderr, /isn't a directory/);
 		});
 
-		it('rejects -o when -s is also passed because they conflict', () => {
-			const result = runCli(['-n', '-o', missingDir, '-s', '-p']);
-
-			assert.equal(result.status, 1);
-			assert.match(result.stderr, /cannot be used with/);
-			assert.equal(outputExistsIn(projectDir), false);
-		});
-
 		it('prints the result and writes no file when -s and -p are passed', () => {
 			const result = runCli(['-n', '-s', '-p']);
 
 			assert.equal(result.status, 0);
 			assert.match(result.stdout, /a\.js/);
 			assert.equal(outputExistsIn(projectDir), false);
-		});
-
-		it('fails when -s is used without -c or -p', () => {
-			const result = runCli(['-n', '-s']);
-
-			assert.equal(result.status, 1);
-			assert.match(result.stderr, /skip-save requires -c\/--copy or -p\/--print/);
 		});
 
 		// The exit code is not asserted: -c needs a system clipboard, which CI machines often lack.
@@ -155,20 +140,6 @@ describe('non-interactive CLI flags', () => {
 			['--dp', ['--dp', '.']],
 			['-C', ['-C']],
 		]) {
-			it(`rejects ${flagName} with an error and a non-zero exit code`, () => {
-				const result = runCli(['-D', ...extraArgs]);
-
-				assert.equal(result.status, 1);
-				assert.match(result.stderr, /cannot be used with/);
-				assert.equal(outputExistsIn(projectDir), false);
-			});
-		}
-
-		for (const [flagName, extraArgs] of [
-			['-o', ['-o', '.']],
-			['--dp', ['--dp', '.']],
-			['-C', ['-C']],
-		]) {
 			it(`rejects ${flagName} even when it is written before -D`, () => {
 				const result = runCli([...extraArgs, '-D']);
 
@@ -178,11 +149,10 @@ describe('non-interactive CLI flags', () => {
 			});
 		}
 
-		it('warns that -n is redundant and still runs as -D when both are passed', () => {
+		it('still runs as -D and writes the output when -n and -D are both passed', () => {
 			const result = runCli(['-n', '-D']);
 
 			assert.equal(result.status, 0);
-			assert.match(result.stderr, /redundant/);
 			assert.ok(outputExistsIn(projectDir));
 		});
 

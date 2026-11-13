@@ -3,12 +3,10 @@ import assert from 'node:assert/strict';
 import { formatTree, formatFiles, formatFinal } from '../../src/utils/format.js';
 
 describe('formatTree', () => {
-	it('includes the exact tree string in the output, unmodified', () => {
-		const treeStr = 'root/\n  file.js\n  nested/\n    other.ts';
-		const result = formatTree(treeStr);
+	it('wraps the tree string unmodified in a titled code block followed by an end marker', () => {
+		const result = formatTree('root/\n  file.js\n  nested/\n    other.ts');
 
-		assert.equal(typeof result, 'string');
-		assert.ok(result.includes(treeStr));
+		assert.equal(result, 'Project Tree:\n\n```\nroot/\n  file.js\n  nested/\n    other.ts\n```\n\n-----~END~-----\n\n');
 	});
 
 	it('never throws, and always returns a string, for any kind of tree string', () => {
@@ -45,6 +43,16 @@ describe('formatFiles', () => {
 	function splitIntoBlocks(result) {
 		return result.split(BLOCK_SEPARATOR).filter((block) => block.length > 0);
 	}
+
+	it('formats a file as a titled code block of its extension followed by an end marker', () => {
+		const filesObj = {
+			'a.js': { isFolder: false, relativePath: 'a.js', extension: 'js', content: 'let a = 1;' },
+		};
+
+		const result = formatFiles(filesObj);
+
+		assert.equal(result, 'a.js Content :\n\n`````js\nlet a = 1;\n`````\n\n-----~END~-----\n\n');
+	});
 
 	it('produces exactly one output block per file, each containing only that file\'s content', () => {
 		const filesObj = {
@@ -161,18 +169,6 @@ describe('formatFiles', () => {
 });
 
 describe('formatFinal', () => {
-	it('is lossless: both the formatted tree and formatted files are recoverable from the output', () => {
-		const result = formatFinal('TREE_PART', 'FILES_PART');
-
-		assert.ok(result.includes('TREE_PART'));
-		assert.ok(result.includes('FILES_PART'));
-	});
-
-	it('orders the tree before the files', () => {
-		const result = formatFinal('TREE_PART', 'FILES_PART');
-		assert.ok(result.indexOf('TREE_PART') < result.indexOf('FILES_PART'));
-	});
-
 	it('is just concatenation: swapping arguments swaps the output order', () => {
 		assert.equal(formatFinal('A', 'B'), 'A' + 'B');
 		assert.equal(formatFinal('B', 'A'), 'B' + 'A');

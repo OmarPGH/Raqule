@@ -1,9 +1,10 @@
 import { describe, it, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import path from 'node:path';
 import { gather } from '../../src/core/gather.js';
 import { configurationDefault } from '../../src/shared/constants.js';
-import { baseFlags, createTempProject, removeTempProject } from '../support/tempProject.js';
+import { baseFlags, createTempProject, removeTempProject, symlinkTestOptions } from '../support/tempProject.js';
 
 const BINARY_PLACEHOLDER = '[Binary file skipped]';
 
@@ -178,6 +179,41 @@ describe('gather', () => {
 			const result = await gatherFrom(files, { depth: 2 });
 
 			assert.equal(result.src.children['b.js'].content, 'b');
+		});
+	});
+
+	describe('unusual project layouts', () => {
+		it('reads files whose names and content contain spaces and unicode characters', async () => {
+			const result = await gatherFrom({ 'my folder/file name.js': 'spaced', 'café/ملف.js': 'مرحبا 👋' });
+
+			assert.equal(result['my folder'].children['file name.js'].content, 'spaced');
+			assert.equal(result.café.children['ملف.js'].relativePath, 'café/ملف.js');
+			assert.equal(result.café.children['ملف.js'].content, 'مرحبا 👋');
+		});
+
+		it('returns an empty object for an empty project', async () => {
+			const result = await gatherFrom({});
+
+			assert.deepEqual(result, {});
+		});
+
+		it('reads a file nested 25 folders deep', async () => {
+			const folders = Array.from({ length: 25 }, (_, level) => `d${level}`);
+
+			const result = await gatherFrom({ [`${folders.join('/')}/bottom.js`]: 'bottom' });
+
+			const innermost = folders.reduce((node, name) => node[name].children, result);
+			assert.equal(innermost['bottom.js'].content, 'bottom');
+			assert.equal(innermost['bottom.js'].relativePath, `${folders.join('/')}/bottom.js`);
+		});
+
+		it('reads the content of a symlink that points to a file', symlinkTestOptions, async () => {
+			projectDir = createTempProject({ 'real.js': 'let real = 1;' });
+			fs.symlinkSync(path.join(projectDir, 'real.js'), path.join(projectDir, 'link.js'));
+
+			const result = await gather(projectDir, baseFlags, configurationDefault);
+
+			assert.equal(result['link.js'].content, 'let real = 1;');
 		});
 	});
 });
