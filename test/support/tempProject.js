@@ -4,6 +4,9 @@ import path from 'node:path';
 
 export const baseFlags = { depth: Infinity };
 
+// Creating symlinks on Windows needs elevated privileges.
+export const symlinkTestOptions = { skip: process.platform === 'win32' };
+
 export function createTempProject(files) {
 	const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), 'raqule-test-'));
 

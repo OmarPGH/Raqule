@@ -17,19 +17,19 @@ function isIgnored(resolver, name) {
 			return ele;
 		}
 	}).join('');
-  	return resolver.isIgnored(exampleName, exampleName) && resolver.isIgnored(`folderOne/folderTwo/${exampleName}`, exampleName);
+	return resolver.isIgnored(exampleName, exampleName) && resolver.isIgnored(`folderOne/folderTwo/${exampleName}`, exampleName);
 }
 
 function checkIsIgnored(resolver, name) {
-	it(`Ignores ${name}`, () => {
+	it(`ignores ${name} at the root and inside nested folders`, () => {
 		assert.ok(isIgnored(resolver, name));
 	});
 }
 
 function checkIsNotIgnored(resolver, name) {
-    it(`Doesn't ignore ${name}`, () => {
-  		assert.ok(!isIgnored(resolver, name));
-  	});
+	it(`does not ignore ${name}`, () => {
+		assert.ok(!isIgnored(resolver, name));
+	});
 }
 
 function checkPattern(resolver, pattern) {
@@ -59,6 +59,6 @@ function checkGroups(resolver, groups) {
 }
 
 describe('Default ignore system', () => {
-  const resolver = new IgnoreResolver({}, { ignore: [] });
-  checkGroups(resolver, defaultIgnoreList);
+	const resolver = new IgnoreResolver({}, { ignore: [] });
+	checkGroups(resolver, defaultIgnoreList);
 });

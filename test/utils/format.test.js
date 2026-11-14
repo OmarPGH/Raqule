@@ -3,12 +3,10 @@ import assert from 'node:assert/strict';
 import { formatTree, formatFiles, formatFinal } from '../../src/utils/format.js';
 
 describe('formatTree', () => {
-	it('includes the exact tree string in the output, unmodified', () => {
-		const treeStr = 'root/\n  file.js\n  nested/\n    other.ts';
-		const result = formatTree(treeStr);
+	it('wraps the tree string unmodified in a titled code block followed by an end marker', () => {
+		const result = formatTree('root/\n  file.js\n  nested/\n    other.ts');
 
-		assert.equal(typeof result, 'string');
-		assert.ok(result.includes(treeStr));
+		assert.equal(result, 'Project Tree:\n\n```\nroot/\n  file.js\n  nested/\n    other.ts\n```\n\n-----~END~-----\n\n');
 	});
 
 	it('never throws, and always returns a string, for any kind of tree string', () => {
@@ -24,29 +22,21 @@ describe('formatTree', () => {
 });
 
 describe('formatFiles', () => {
-	// Independently flattens a nested filesObj into [relativePath, content]
-	// pairs, as ground truth to check formatFiles' output against.
-	function flatten(entries, out = []) {
-		for (const entry of Object.values(entries)) {
-			if (entry.isFolder) {
-				flatten(entry.children, out);
-			} else {
-				out.push([entry.relativePath, entry.content]);
-			}
-		}
-		return out;
+	function blockOf(relativePath, extension, content) {
+		return `${relativePath} Content :\n\n\`\`\`\`\`${extension}\n${content}\n\`\`\`\`\`\n\n-----~END~-----\n\n`;
 	}
 
-	// Splits output into one chunk per file on the real separator. Naive
-	// about one thing: content containing the literal separator text fools
-	// it into seeing extra blocks (see the "does not corrupt..." test,
-	// which checks that case directly against formatFiles' raw output).
-	const BLOCK_SEPARATOR = /-{5}~END~-{5}\n\n/;
-	function splitIntoBlocks(result) {
-		return result.split(BLOCK_SEPARATOR).filter((block) => block.length > 0);
-	}
+	it('formats a file as a titled code block of its extension followed by an end marker', () => {
+		const filesObj = {
+			'a.js': { isFolder: false, relativePath: 'a.js', extension: 'js', content: 'let a = 1;' },
+		};
 
-	it('produces exactly one output block per file, each containing only that file\'s content', () => {
+		const result = formatFiles(filesObj);
+
+		assert.equal(result, 'a.js Content :\n\n`````js\nlet a = 1;\n`````\n\n-----~END~-----\n\n');
+	});
+
+	it('formats the files of nested folders as one block each, depth-first', () => {
 		const filesObj = {
 			src: {
 				isFolder: true,
@@ -63,40 +53,32 @@ describe('formatFiles', () => {
 			'readme.md': { isFolder: false, relativePath: 'readme.md', extension: 'md', content: '# Hello' },
 		};
 
-		const expected = flatten(filesObj);
 		const result = formatFiles(filesObj);
-		const blocks = splitIntoBlocks(result);
 
-		assert.equal(blocks.length, expected.length);
-
-		expected.forEach(([relativePath, content], i) => {
-			assert.ok(blocks[i].includes(relativePath), `block ${i} should mention ${relativePath}`);
-			assert.ok(blocks[i].includes(content), `block ${i} should contain its own content`);
-			expected.forEach(([otherPath, otherContent], j) => {
-				if (i === j) return;
-				assert.ok(!blocks[i].includes(otherContent), `block ${i} (${relativePath}) leaked content from ${otherPath}`);
-			});
-		});
+		assert.equal(
+			result,
+			blockOf('src/a.js', 'js', 'const a = 1;') + blockOf('src/nested/b.ts', 'ts', 'const b = 2;') + blockOf('readme.md', 'md', '# Hello'),
+		);
 	});
 
-	it('preserves the relative order files were encountered in, depth-first', () => {
+	it('keeps the order files were encountered in when a folder sits between two files', () => {
 		const filesObj = {
-			'first.js': { isFolder: false, relativePath: 'first.js', extension: 'js', content: 'FIRST_MARKER' },
+			'first.js': { isFolder: false, relativePath: 'first.js', extension: 'js', content: 'first' },
 			folder: {
 				isFolder: true,
 				children: {
-					'second.js': { isFolder: false, relativePath: 'folder/second.js', extension: 'js', content: 'SECOND_MARKER' },
+					'second.js': { isFolder: false, relativePath: 'folder/second.js', extension: 'js', content: 'second' },
 				},
 			},
-			'third.js': { isFolder: false, relativePath: 'third.js', extension: 'js', content: 'THIRD_MARKER' },
+			'third.js': { isFolder: false, relativePath: 'third.js', extension: 'js', content: 'third' },
 		};
 
 		const result = formatFiles(filesObj);
-		const positions = ['FIRST_MARKER', 'SECOND_MARKER', 'THIRD_MARKER'].map((m) => result.indexOf(m));
 
-		assert.ok(positions.every((p) => p !== -1));
-		assert.ok(positions[0] < positions[1]);
-		assert.ok(positions[1] < positions[2]);
+		assert.equal(
+			result,
+			blockOf('first.js', 'js', 'first') + blockOf('folder/second.js', 'js', 'second') + blockOf('third.js', 'js', 'third'),
+		);
 	});
 
 	it('includes a file with empty content as its own block, without dropping or merging it', () => {
@@ -106,11 +88,8 @@ describe('formatFiles', () => {
 		};
 
 		const result = formatFiles(filesObj);
-		const blocks = splitIntoBlocks(result);
 
-		assert.equal(blocks.length, 2);
-		assert.ok(blocks[0].includes('empty.js'));
-		assert.ok(blocks[1].includes('const after = true;'));
+		assert.equal(result, blockOf('empty.js', 'js', '') + blockOf('after.js', 'js', 'const after = true;'));
 	});
 
 	it('returns an empty string for no entries, and for folders with no files inside them', () => {
@@ -131,48 +110,28 @@ describe('formatFiles', () => {
 		};
 
 		const result = formatFiles(filesObj);
-		const blocks = splitIntoBlocks(result);
 
-		assert.equal(blocks.length, 2);
-		assert.ok(blocks[0].includes('function a() {}'));
-		assert.ok(!blocks[0].includes('// plus more'));
-		assert.ok(blocks[1].includes('function a() {} // plus more'));
+		assert.equal(
+			result,
+			blockOf('short.js', 'js', 'function a() {}') + blockOf('long.js', 'js', 'function a() {} // plus more'),
+		);
 	});
 
-	it('does not corrupt a file whose own content contains separator-like text', () => {
-		const separatorLookalike = 'console.log(1);\n\n-----~END~-----\n\n';
-		const filesObj = {
-			'tricky.js': { isFolder: false, relativePath: 'tricky.js', extension: 'js', content: separatorLookalike },
+	it('formats a file whose content contains separator-like text the same as when it is formatted alone', () => {
+		const trickyFile = {
+			'tricky.js': { isFolder: false, relativePath: 'tricky.js', extension: 'js', content: 'let a;\n\n-----~END~-----\n\n' },
+		};
+		const afterFile = {
 			'after.js': { isFolder: false, relativePath: 'after.js', extension: 'js', content: 'const after = true;' },
 		};
 
-		const result = formatFiles(filesObj);
+		const result = formatFiles({ ...trickyFile, ...afterFile });
 
-		assert.ok(result.includes(separatorLookalike));
-		assert.ok(result.includes('const after = true;'));
-
-		// A naive split on the separator yields more chunks than files,
-		// since the lookalike text is indistinguishable from a real
-		// boundary — illustrating why splitIntoBlocks isn't safe for
-		// untrusted content, even though formatFiles itself is lossless.
-		const blocks = splitIntoBlocks(result);
-		assert.ok(blocks.length > 2);
+		assert.equal(result, formatFiles(trickyFile) + formatFiles(afterFile));
 	});
 });
 
 describe('formatFinal', () => {
-	it('is lossless: both the formatted tree and formatted files are recoverable from the output', () => {
-		const result = formatFinal('TREE_PART', 'FILES_PART');
-
-		assert.ok(result.includes('TREE_PART'));
-		assert.ok(result.includes('FILES_PART'));
-	});
-
-	it('orders the tree before the files', () => {
-		const result = formatFinal('TREE_PART', 'FILES_PART');
-		assert.ok(result.indexOf('TREE_PART') < result.indexOf('FILES_PART'));
-	});
-
 	it('is just concatenation: swapping arguments swaps the output order', () => {
 		assert.equal(formatFinal('A', 'B'), 'A' + 'B');
 		assert.equal(formatFinal('B', 'A'), 'B' + 'A');

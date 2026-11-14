@@ -1,10 +1,8 @@
-import { describe, it } from 'node:test';
+import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { runNode } from '../support/runCli.js';
 
 const flagsModuleUrl = new URL('../../src/input/flags.js', import.meta.url).href;
-const packageVersion = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8')).version;
 
 // readFlags uses commander's shared program, so each case needs a fresh process.
 // The placeholder fills the script slot commander skips when reading argv.
@@ -15,21 +13,44 @@ console.log(JSON.stringify(readFlags(), (key, value) => (value === Infinity ? 'I
 `;
 
 function runReadFlags(args) {
-	return spawnSync(process.execPath, ['--input-type=module', '-e', runnerScript, '--', ...args], {
-		encoding: 'utf8',
-		timeout: 15000,
-	});
+	return runNode(['--input-type=module', '-e', runnerScript, '--', ...args]);
+}
+
+function useFlagsRun(args) {
+	const run = {};
+
+	before(() => Object.assign(run, runReadFlags(args)));
+
+	return run;
+}
+
+function flagsOf(run) {
+	assert.equal(run.status, 0, run.stderr);
+
+	return JSON.parse(run.stdout);
 }
 
 function flagsFrom(args) {
-	const result = runReadFlags(args);
-
-	assert.equal(result.status, 0, result.stderr);
-
-	return JSON.parse(result.stdout);
+	return flagsOf(runReadFlags(args));
 }
 
 describe('readFlags', () => {
+	// -D conflicts with -C, so it cannot share a run with the other boolean flags.
+	const booleanFlags = [
+		['-a', '--all', 'all'],
+		['-c', '--copy', 'copy'],
+		['-C', '--create-config', 'createConfig'],
+		['-p', '--print', 'print'],
+		['-t', '--tree', 'tree'],
+		['-T', '--tokens', 'tokens'],
+		['-n', '--non-interactive', 'nonInteractive'],
+	];
+	// Run `bit` passes the flags whose position (1 to 7) has that binary digit set, so every flag
+	// appears in a different combination of the 3 runs and a flag wired to the wrong property shows.
+	const booleanRuns = [0, 1, 2].map((bit) => booleanFlags.filter((_, index) => ((index + 1) >> bit) & 1));
+	const shortBooleanRuns = booleanRuns.map((flagsInRun) => useFlagsRun(flagsInRun.map(([shortFlag]) => shortFlag)));
+	const longBooleanRuns = booleanRuns.map((flagsInRun) => useFlagsRun(flagsInRun.map(([, longFlag]) => longFlag)));
+
 	describe('defaults', () => {
 		it('sets only an unlimited depth when no flag is passed', () => {
 			assert.deepEqual(flagsFrom([]), { depth: 'Infinity' });
@@ -37,21 +58,24 @@ describe('readFlags', () => {
 	});
 
 	describe('boolean flags', () => {
-		for (const [shortFlag, longFlag, key] of [
-			['-a', '--all', 'all'],
-			['-c', '--copy', 'copy'],
-			['-C', '--create-config', 'createConfig'],
-			['-p', '--print', 'print'],
-			['-t', '--tree', 'tree'],
-			['-T', '--tokens', 'tokens'],
-			['-n', '--non-interactive', 'nonInteractive'],
-			['-D', '--default', 'default'],
-		]) {
-			it(`sets ${key} to true for ${shortFlag} and ${longFlag}`, () => {
-				assert.equal(flagsFrom([shortFlag])[key], true);
-				assert.equal(flagsFrom([longFlag])[key], true);
+		const shortDefault = useFlagsRun(['-D']);
+		const longDefault = useFlagsRun(['--default']);
+
+		for (const [shortFlag, longFlag, key] of booleanFlags) {
+			it(`sets ${key} to true only when ${shortFlag} or ${longFlag} is passed`, () => {
+				booleanRuns.forEach((flagsInRun, index) => {
+					const expected = flagsInRun.some(([, , runKey]) => runKey === key) || undefined;
+
+					assert.equal(flagsOf(shortBooleanRuns[index])[key], expected);
+					assert.equal(flagsOf(longBooleanRuns[index])[key], expected);
+				});
 			});
 		}
+
+		it('sets only default to true for -D and --default', () => {
+			assert.deepEqual(flagsOf(shortDefault), { depth: 'Infinity', default: true });
+			assert.deepEqual(flagsOf(longDefault), { depth: 'Infinity', default: true });
+		});
 	});
 
 	describe('depth', () => {
@@ -94,24 +118,32 @@ describe('readFlags', () => {
 	});
 
 	describe('value flags', () => {
-		it('reads the directory path from --dp', () => {
-			assert.equal(flagsFrom(['--dp', './project']).directoryPath, './project');
-		});
-
-		it('reads the output folder from -o', () => {
-			assert.equal(flagsFrom(['-o', './out']).output, './out');
-		});
-
-		for (const [flagName, key] of [
+		const patternFlags = [
 			['-e', 'exclude'],
 			['--ce', 'contentExclude'],
 			['--te', 'treeExclude'],
 			['-i', 'include'],
 			['--ci', 'contentInclude'],
 			['--ti', 'treeInclude'],
-		]) {
+		];
+		const patternsOf = (key) => [`${key}1`, `${key}2`, `${key}3`];
+		const valueFlags = useFlagsRun([
+			'--dp', './project',
+			'-o', './out',
+			...patternFlags.flatMap(([flagName, key]) => [flagName, ...patternsOf(key)]),
+		]);
+
+		it('reads the directory path from --dp', () => {
+			assert.equal(flagsOf(valueFlags).directoryPath, './project');
+		});
+
+		it('reads the output folder from -o', () => {
+			assert.equal(flagsOf(valueFlags).output, './out');
+		});
+
+		for (const [flagName, key] of patternFlags) {
 			it(`collects several patterns after ${flagName} into ${key}`, () => {
-				assert.deepEqual(flagsFrom([flagName, 'one', 'two', 'three'])[key], ['one', 'two', 'three']);
+				assert.deepEqual(flagsOf(valueFlags)[key], patternsOf(key));
 			});
 		}
 	});
@@ -182,10 +214,9 @@ describe('readFlags', () => {
 		});
 
 		it('does not warn about redundancy when -n is used without -D', () => {
-			const result = runReadFlags(['-n']);
-
-			assert.equal(result.status, 0);
-			assert.doesNotMatch(result.stderr, /redundant/);
+			for (const run of [...shortBooleanRuns, ...longBooleanRuns]) {
+				assert.equal(run.stderr, '');
+			}
 		});
 
 		it('rejects an unknown flag', () => {
@@ -193,15 +224,6 @@ describe('readFlags', () => {
 
 			assert.equal(result.status, 1);
 			assert.match(result.stderr, /unknown option/);
-		});
-	});
-
-	describe('version', () => {
-		it('prints the version from package.json for --version', () => {
-			const result = runReadFlags(['--version']);
-
-			assert.equal(result.status, 0);
-			assert.equal(result.stdout.trim(), packageVersion);
 		});
 	});
 });

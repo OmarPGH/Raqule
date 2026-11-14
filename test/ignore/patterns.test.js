@@ -34,13 +34,13 @@ describe('buildPatterns', () => {
 		it('keeps the default list on top of the user patterns unless all is passed', () => {
 			const patterns = buildPatterns({ exclude: ['custom'] }, noConfig, 'content');
 
-			assert.ok(patterns.includes('custom'));
-			assert.ok(patterns.includes('node_modules'));
+			assert.deepEqual(patterns, [...flatDefaultIgnoreList, 'custom']);
 		});
 	});
 
 	describe('scopes', () => {
 		const flags = { all: true, contentExclude: ['onlyContent'], treeExclude: ['onlyTree'] };
+		const defaultsWithoutNodeModules = flatDefaultIgnoreList.filter((pattern) => pattern !== 'node_modules');
 
 		it('applies contentExclude to the content scope only', () => {
 			assert.deepEqual(buildPatterns(flags, noConfig, 'content'), ['onlyContent']);
@@ -53,15 +53,15 @@ describe('buildPatterns', () => {
 		it('applies contentInclude to the content scope only', () => {
 			const includeFlags = { contentInclude: ['node_modules'] };
 
-			assert.ok(!buildPatterns(includeFlags, noConfig, 'content').includes('node_modules'));
-			assert.ok(buildPatterns(includeFlags, noConfig, 'tree').includes('node_modules'));
+			assert.deepEqual(buildPatterns(includeFlags, noConfig, 'content'), defaultsWithoutNodeModules);
+			assert.deepEqual(buildPatterns(includeFlags, noConfig, 'tree'), flatDefaultIgnoreList);
 		});
 
 		it('applies treeInclude to the tree scope only', () => {
 			const includeFlags = { treeInclude: ['node_modules'] };
 
-			assert.ok(!buildPatterns(includeFlags, noConfig, 'tree').includes('node_modules'));
-			assert.ok(buildPatterns(includeFlags, noConfig, 'content').includes('node_modules'));
+			assert.deepEqual(buildPatterns(includeFlags, noConfig, 'tree'), defaultsWithoutNodeModules);
+			assert.deepEqual(buildPatterns(includeFlags, noConfig, 'content'), flatDefaultIgnoreList);
 		});
 	});
 
@@ -69,14 +69,13 @@ describe('buildPatterns', () => {
 		it('removes an included name from the default list and keeps the rest', () => {
 			const patterns = buildPatterns({ include: ['.git'] }, noConfig, 'content');
 
-			assert.ok(!patterns.includes('.git'));
-			assert.ok(patterns.includes('.svn'));
+			assert.deepEqual(patterns, flatDefaultIgnoreList.filter((pattern) => pattern !== '.git'));
 		});
 
 		it('removes a glob pattern when an included name matches it', () => {
 			const patterns = buildPatterns({ include: ['debug.log'] }, noConfig, 'content');
 
-			assert.ok(!patterns.includes('*.log'));
+			assert.deepEqual(patterns, flatDefaultIgnoreList.filter((pattern) => pattern !== '*.log'));
 		});
 
 		it('removes patterns that come from the config and from exclude as well', () => {

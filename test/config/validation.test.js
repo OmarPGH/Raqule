@@ -30,7 +30,7 @@ describe('validateConfig', () => {
 	});
 
 	describe('broken configuration', () => {
-		it('throws a syntax error that mentions TOML when the configuration is "broken"', async () => {
+		it('throws a syntax error saying the config file is broken when the configuration is "broken"', async () => {
 			await assert.rejects(validateConfig('broken', '.'), /Syntax Error: You have a broken config file/);
 		});
 

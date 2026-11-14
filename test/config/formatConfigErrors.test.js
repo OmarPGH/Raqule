@@ -11,16 +11,6 @@ function buildIssue({ path, message, expected }) {
 }
 
 describe('formatConfigErrors', () => {
-	it('starts with the "Config error at:" title', () => {
-		const error = buildError([
-			buildIssue({ path: ['ignore'], message: 'Invalid input: expected array, received string', expected: 'array' }),
-		]);
-
-		const result = formatConfigErrors(error);
-
-		assert.ok(result.startsWith('Config error at:'));
-	});
-
 	it('shows the path, the found value and the expected type of one issue', () => {
 		const error = buildError([
 			buildIssue({ path: ['ignore'], message: 'Invalid input: expected array, received string', expected: 'array' }),
@@ -62,19 +52,8 @@ describe('formatConfigErrors', () => {
 
 		const result = formatConfigErrors(error);
 
-		assert.match(result, /1\. \[ignore\.0\][\s\S]*2\. \[ignore\.1\]/);
-	});
-
-	it('reports each issue with its own found value', () => {
-		const error = buildError([
-			buildIssue({ path: ['ignore', 0], message: 'Invalid input: expected string, received number', expected: 'string' }),
-			buildIssue({ path: ['ignore', 1], message: 'Invalid input: expected string, received boolean', expected: 'string' }),
-		]);
-
-		const result = formatConfigErrors(error);
-
-		assert.match(result, /Found: number/);
-		assert.match(result, /Found: boolean/);
+		assert.match(result, /1\. \[ignore\.0\]\n {5}Found: number\n {5}Expected: string\n/);
+		assert.match(result, /2\. \[ignore\.1\]\n {5}Found: boolean\n {5}Expected: string/);
 	});
 
 	it('returns only the title when there are no issues', () => {

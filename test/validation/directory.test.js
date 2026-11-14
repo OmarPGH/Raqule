@@ -1,64 +1,51 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { validateDirectory } from '../../src/validation/directory.js';
+import { createTempProject, removeTempProject } from '../support/tempProject.js';
 
 describe('validateDirectory', () => {
 	let tmpDir;
+	let filePath;
+	let missingPath;
 
 	beforeEach(() => {
-		tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'raqule-test-'));
+		tmpDir = createTempProject({ 'file.txt': 'hello' });
+		filePath = path.join(tmpDir, 'file.txt');
+		missingPath = path.join(tmpDir, 'does-not-exist');
 	});
 
-	afterEach(() => {
-		fs.rmSync(tmpDir, { recursive: true, force: true });
-	});
+	afterEach(() => removeTempProject(tmpDir));
 
 	it('resolves with the given path when it is an existing directory', async () => {
 		const result = await validateDirectory(tmpDir);
+
 		assert.equal(result, tmpDir);
 	});
 
-	it('rejects (does not resolve) when the path does not exist', async () => {
-		const missingPath = path.join(tmpDir, 'does-not-exist');
+	it('rejects when the path does not exist', async () => {
 		await assert.rejects(() => validateDirectory(missingPath));
 	});
 
-	it('rejects (does not resolve) when the path exists but is a file, not a directory', async () => {
-		const filePath = path.join(tmpDir, 'file.txt');
-		fs.writeFileSync(filePath, 'hello');
+	it('rejects when the path is a file, not a directory', async () => {
 		await assert.rejects(() => validateDirectory(filePath));
 	});
 
-	it('rejects with a real Error instance in every failure case, not a raw string/code', async () => {
-		const missingPath = path.join(tmpDir, 'does-not-exist');
-		const filePath = path.join(tmpDir, 'file.txt');
-		fs.writeFileSync(filePath, 'hello');
-
+	it('rejects with an Error instance, not a raw string or code, in every failure case', async () => {
 		await assert.rejects(() => validateDirectory(missingPath), (err) => err instanceof Error);
 		await assert.rejects(() => validateDirectory(filePath), (err) => err instanceof Error);
 	});
 
-	it('treats "missing path" and "path is a file" as distinguishable failure cases', async () => {
-		// Regardless of wording, a caller must be able to tell these two
-		// situations apart (e.g. to suggest "did you mean a different path?"
-		// vs "that's a file, pick its containing folder"). We check this
-		// behaviorally, not by matching text: the two errors must not be
-		// interchangeable/equal, and each must stay specific to its own
-		// case instead of being reused for both.
-		const missingPath = path.join(tmpDir, 'does-not-exist');
-		const filePath = path.join(tmpDir, 'file.txt');
-		fs.writeFileSync(filePath, 'hello');
-
+	it('rejects with a different message for a missing path than for a path that is a file', async () => {
+		// Callers suggest a different fix for each case, so the errors must not be interchangeable.
 		const missingErr = await validateDirectory(missingPath).catch((e) => e);
 		const fileErr = await validateDirectory(filePath).catch((e) => e);
 
 		assert.notEqual(missingErr.message, fileErr.message);
 	});
 
-	it('does not swallow or reinterpret an unrelated filesystem error (e.g. permission denied) as "not found"', async () => {
+	it('rejects with the original error when the filesystem fails for another reason such as permission denied', async () => {
 		const originalStat = fs.promises.stat;
 		const permissionError = Object.assign(new Error('simulated EACCES'), { code: 'EACCES' });
 		fs.promises.stat = async () => {
@@ -66,18 +53,18 @@ describe('validateDirectory', () => {
 		};
 
 		try {
-			// The function must propagate this exact error object rather
-			// than catching it and manufacturing its own "not found"
-			// message (which would mislead the caller about the real cause).
+			// Rewrapping it as "not found" would hide the real cause from the caller.
 			await assert.rejects(() => validateDirectory(tmpDir), (err) => err === permissionError);
 		} finally {
 			fs.promises.stat = originalStat;
 		}
 	});
 
-	it('resolving does not depend on trailing slashes in the given path', async () => {
+	it('resolves with the given path unchanged when it ends with a trailing slash', async () => {
 		const withTrailingSlash = tmpDir.endsWith(path.sep) ? tmpDir : tmpDir + path.sep;
+
 		const result = await validateDirectory(withTrailingSlash);
+
 		assert.equal(result, withTrailingSlash);
 	});
 });
