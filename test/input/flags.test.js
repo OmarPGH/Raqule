@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { runNode } from '../support/runCli.js';
 
 const flagsModuleUrl = new URL('../../src/input/flags.js', import.meta.url).href;
 
@@ -13,10 +13,7 @@ console.log(JSON.stringify(readFlags(), (key, value) => (value === Infinity ? 'I
 `;
 
 function runReadFlags(args) {
-	return spawnSync(process.execPath, ['--input-type=module', '-e', runnerScript, '--', ...args], {
-		encoding: 'utf8',
-		timeout: 15000,
-	});
+	return runNode(['--input-type=module', '-e', runnerScript, '--', ...args]);
 }
 
 function flagsFrom(args) {

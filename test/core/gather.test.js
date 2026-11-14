@@ -203,6 +203,7 @@ describe('gather', () => {
 			const result = await gatherFrom({ [`${folders.join('/')}/bottom.js`]: 'bottom' });
 
 			const innermost = folders.reduce((node, name) => node[name].children, result);
+
 			assert.equal(innermost['bottom.js'].content, 'bottom');
 			assert.equal(innermost['bottom.js'].relativePath, `${folders.join('/')}/bottom.js`);
 		});

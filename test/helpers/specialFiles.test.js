@@ -5,6 +5,7 @@ import { specialFileHandler } from '../../src/helpers/specialFiles.js';
 describe('specialFileHandler', () => {
 	it('returns a handler for a bare "LICENSE" file', () => {
 		const handler = specialFileHandler('LICENSE');
+
 		assert.equal(typeof handler, 'function');
 	});
 
@@ -32,7 +33,7 @@ describe('specialFileHandler', () => {
 		assert.equal(specialFileHandler(''), undefined);
 	});
 
-	it('the returned handler truncates content to the first 3 lines', () => {
+	it('returns a handler that truncates content to the first 3 lines', () => {
 		const handler = specialFileHandler('LICENSE');
 		const content = 'line1\nline2\nline3\nline4\nline5';
 		const expected = 'line1\nline2\nline3';
@@ -40,14 +41,14 @@ describe('specialFileHandler', () => {
 		assert.equal(handler(content), expected);
 	});
 
-	it('the returned handler returns all content as-is when there are 3 or fewer lines', () => {
+	it('returns a handler that keeps content as-is when it has 3 or fewer lines', () => {
 		const handler = specialFileHandler('LICENSE.md');
 		const content = 'only one line';
 
 		assert.equal(handler(content), content);
 	});
 
-	it('the returned handler returns an empty string for empty content', () => {
+	it('returns a handler that returns an empty string for empty content', () => {
 		const handler = specialFileHandler('LICENSE');
 		const content = '';
 

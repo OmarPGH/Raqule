@@ -3,9 +3,7 @@ import assert from 'node:assert/strict';
 import { getEncoding } from 'js-tiktoken';
 import { countTokens } from '../../src/utils/tokens.js';
 
-// getEncoding() reloads its full BPE vocab on every call (~400-700ms, no
-// internal caching), so this file loads it once in `before`, computes
-// every needed value, and reuses them across cheap assertions below.
+// getEncoding() reloads the whole vocabulary on every call (~400-700ms), so it runs once in `before`.
 describe('countTokens', () => {
 	const SAMPLE_TEXT = 'Hello, world!';
 	const LONGER_TEXT = 'The quick brown fox jumps over the lazy dog. This sentence is used to test tokenizers.';
@@ -17,7 +15,7 @@ describe('countTokens', () => {
 	let sampleCountExplicitEncoding;
 
 	before(() => {
-		const enc = getEncoding('o200k_base'); // one load for the whole file
+		const enc = getEncoding('o200k_base');
 
 		sampleCountDefault = countTokens(SAMPLE_TEXT);
 		sampleCountGroundTruth = enc.encode(SAMPLE_TEXT).length;
@@ -32,11 +30,11 @@ describe('countTokens', () => {
 		assert.equal(countTokens(''), 0);
 	});
 
-	it('matches js-tiktoken\'s own encode().length (ground truth, not just "> 0")', () => {
+	it('counts the same tokens as js-tiktoken for a short text', () => {
 		assert.equal(sampleCountDefault, sampleCountGroundTruth);
 	});
 
-	it('matches js-tiktoken for a longer, multi-sentence piece of text', () => {
+	it('counts the same tokens as js-tiktoken for a longer, multi-sentence text', () => {
 		assert.equal(longerCountDefault, longerCountGroundTruth);
 	});
 
@@ -44,11 +42,11 @@ describe('countTokens', () => {
 		assert.ok(longerCountDefault > sampleCountDefault);
 	});
 
-	it('accepts the encoding name explicitly and still matches the ground truth', () => {
+	it('counts the same tokens as js-tiktoken when the encoding name is passed explicitly', () => {
 		assert.equal(sampleCountExplicitEncoding, sampleCountGroundTruth);
 	});
 
-	it('throws a clear error for an unknown/invalid encoding name', () => {
+	it('throws when the encoding name is unknown', () => {
 		assert.throws(() => countTokens(SAMPLE_TEXT, 'not-a-real-encoding'));
 	});
 
@@ -59,10 +57,8 @@ describe('countTokens', () => {
 		assert.throws(() => countTokens({}), /expected "string"/);
 	});
 
-	// Pinned fixture, independent of any runtime js-tiktoken call — catches
-	// drift the live-comparison tests above can't, since those recompute
-	// both sides from the same library at test time.
-	it('"Hello, world!" is a pinned token count (4) under o200k_base', () => {
+	// Pinned value: the comparisons above compute both sides with the same library, so they cannot catch drift.
+	it('counts "Hello, world!" as exactly 4 tokens under o200k_base', () => {
 		assert.equal(sampleCountDefault, 4);
 	});
 });

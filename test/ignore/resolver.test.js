@@ -21,15 +21,15 @@ function isIgnored(resolver, name) {
 }
 
 function checkIsIgnored(resolver, name) {
-	it(`Ignores ${name}`, () => {
+	it(`ignores ${name} at the root and inside nested folders`, () => {
 		assert.ok(isIgnored(resolver, name));
 	});
 }
 
 function checkIsNotIgnored(resolver, name) {
-    it(`Doesn't ignore ${name}`, () => {
-  		assert.ok(!isIgnored(resolver, name));
-  	});
+	it(`does not ignore ${name}`, () => {
+		assert.ok(!isIgnored(resolver, name));
+	});
 }
 
 function checkPattern(resolver, pattern) {

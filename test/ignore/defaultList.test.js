@@ -29,7 +29,7 @@ describe('defaultIgnoreList', () => {
 });
 
 describe('flatDefaultIgnoreList', () => {
-	it('is every group pattern in one flat list, in group order', () => {
+	it('lists every group pattern in one flat list, in group order', () => {
 		const expected = Object.values(defaultIgnoreList).reduce((all, patterns) => [...all, ...patterns], []);
 
 		assert.deepEqual(flatDefaultIgnoreList, expected);

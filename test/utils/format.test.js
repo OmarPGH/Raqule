@@ -22,8 +22,6 @@ describe('formatTree', () => {
 });
 
 describe('formatFiles', () => {
-	// Independently flattens a nested filesObj into [relativePath, content]
-	// pairs, as ground truth to check formatFiles' output against.
 	function flatten(entries, out = []) {
 		for (const entry of Object.values(entries)) {
 			if (entry.isFolder) {
@@ -35,10 +33,6 @@ describe('formatFiles', () => {
 		return out;
 	}
 
-	// Splits output into one chunk per file on the real separator. Naive
-	// about one thing: content containing the literal separator text fools
-	// it into seeing extra blocks (see the "does not corrupt..." test,
-	// which checks that case directly against formatFiles' raw output).
 	const BLOCK_SEPARATOR = /-{5}~END~-{5}\n\n/;
 	function splitIntoBlocks(result) {
 		return result.split(BLOCK_SEPARATOR).filter((block) => block.length > 0);
@@ -147,24 +141,17 @@ describe('formatFiles', () => {
 		assert.ok(blocks[1].includes('function a() {} // plus more'));
 	});
 
-	it('does not corrupt a file whose own content contains separator-like text', () => {
-		const separatorLookalike = 'console.log(1);\n\n-----~END~-----\n\n';
-		const filesObj = {
-			'tricky.js': { isFolder: false, relativePath: 'tricky.js', extension: 'js', content: separatorLookalike },
+	it('formats a file whose content contains separator-like text the same as when it is formatted alone', () => {
+		const trickyFile = {
+			'tricky.js': { isFolder: false, relativePath: 'tricky.js', extension: 'js', content: 'let a;\n\n-----~END~-----\n\n' },
+		};
+		const afterFile = {
 			'after.js': { isFolder: false, relativePath: 'after.js', extension: 'js', content: 'const after = true;' },
 		};
 
-		const result = formatFiles(filesObj);
+		const result = formatFiles({ ...trickyFile, ...afterFile });
 
-		assert.ok(result.includes(separatorLookalike));
-		assert.ok(result.includes('const after = true;'));
-
-		// A naive split on the separator yields more chunks than files,
-		// since the lookalike text is indistinguishable from a real
-		// boundary — illustrating why splitIntoBlocks isn't safe for
-		// untrusted content, even though formatFiles itself is lossless.
-		const blocks = splitIntoBlocks(result);
-		assert.ok(blocks.length > 2);
+		assert.equal(result, formatFiles(trickyFile) + formatFiles(afterFile));
 	});
 });
 

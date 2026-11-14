@@ -58,7 +58,7 @@ describe('buildAskAbout when no prompt should be shown', () => {
 		});
 	}
 
-	it('with -n, prefers the passed flag and falls back to defaults for the rest', async () => {
+	it('prefers the passed flag and falls back to defaults for the rest when -n is used', async () => {
 		const result = await askAll(buildSilent({ nonInteractive: true, output: '/some/out' }));
 
 		assert.deepEqual(result, {
@@ -68,24 +68,30 @@ describe('buildAskAbout when no prompt should be shown', () => {
 		});
 	});
 
-	it('with -n, answers yes to the config question when --cc is passed', async () => {
+	it('answers yes to the config question when -n is used with --cc', async () => {
 		const addConfigFile = await buildSilent({ nonInteractive: true, createConfig: true }).addConfigFile();
+
 		assert.equal(addConfigFile, true);
 	});
 
-	it('keeps each instance on its own flags', async () => {
+	it('keeps the flags of one instance separate from the flags of another', async () => {
 		const first = buildSilent({ directoryPath: '/project-a' });
 		const second = buildSilent({ directoryPath: '/project-b' });
 
-		assert.equal(await first.dirPath(), '/project-a');
-		assert.equal(await second.dirPath(), '/project-b');
+		const firstDirPath = await first.dirPath();
+		const secondDirPath = await second.dirPath();
+
+		assert.equal(firstDirPath, '/project-a');
+		assert.equal(secondDirPath, '/project-b');
 	});
 
 	it('does not leak a preset value from a later instance into an earlier one', async () => {
 		const first = buildSilent({ nonInteractive: true });
 		buildSilent({ nonInteractive: true, output: '/some/out' });
 
-		assert.equal(await first.outputPath(), './');
+		const outputPath = await first.outputPath();
+
+		assert.equal(outputPath, './');
 	});
 
 	it('tells the user whether each value came from a flag or from the default', async () => {

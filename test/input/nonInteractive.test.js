@@ -1,13 +1,10 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { outputFileName, configFileName } from '../../src/shared/constants.js';
-
-const cliPath = fileURLToPath(new URL('../../bin/cli.js', import.meta.url));
+import { createTempProject, removeTempProject } from '../support/tempProject.js';
+import { runCli } from '../support/runCli.js';
 
 describe('non-interactive CLI flags', () => {
 	let tmpDir;
@@ -15,14 +12,8 @@ describe('non-interactive CLI flags', () => {
 	let outDir;
 	let missingDir;
 
-	// Closed stdin makes an unexpected prompt fail fast instead of hanging.
-	function runCli(args, cwd = projectDir) {
-		return spawnSync(process.execPath, [cliPath, ...args], {
-			cwd,
-			input: '',
-			encoding: 'utf8',
-			timeout: 15000,
-		});
+	function run(args, cwd = projectDir) {
+		return runCli(args, cwd);
 	}
 
 	function outputExistsIn(directory) {
@@ -30,22 +21,17 @@ describe('non-interactive CLI flags', () => {
 	}
 
 	beforeEach(() => {
-		tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'raqule-cli-test-'));
+		tmpDir = createTempProject({ 'project/a.js': "console.log('hi');\n", 'out/': '' });
 		projectDir = path.join(tmpDir, 'project');
 		outDir = path.join(tmpDir, 'out');
 		missingDir = path.join(tmpDir, 'does-not-exist');
-		fs.mkdirSync(projectDir);
-		fs.mkdirSync(outDir);
-		fs.writeFileSync(path.join(projectDir, 'a.js'), "console.log('hi');\n");
 	});
 
-	afterEach(() => {
-		fs.rmSync(tmpDir, { recursive: true, force: true });
-	});
+	afterEach(() => removeTempProject(tmpDir));
 
 	describe('-n / --non-interactive', () => {
 		it('uses the defaults and writes the output in the current folder when no other flag is passed', () => {
-			const result = runCli(['-n']);
+			const result = run(['-n']);
 
 			assert.equal(result.status, 0);
 			assert.ok(outputExistsIn(projectDir));
@@ -53,13 +39,13 @@ describe('non-interactive CLI flags', () => {
 		});
 
 		it('does not create a config file when -C/--create-config is not passed', () => {
-			runCli(['-n']);
+			run(['-n']);
 
 			assert.equal(fs.existsSync(path.join(projectDir, configFileName)), false);
 		});
 
 		it('creates the config file when -C/--create-config is passed', () => {
-			const result = runCli(['-n', '-C']);
+			const result = run(['-n', '-C']);
 
 			assert.equal(result.status, 0);
 			assert.ok(fs.existsSync(path.join(projectDir, configFileName)));
@@ -67,7 +53,7 @@ describe('non-interactive CLI flags', () => {
 
 		// Running from the parent folder makes the "./" defaults point to the wrong place.
 		it('writes the output of the --dp project into the -o folder', () => {
-			const result = runCli(['-n', '--dp', projectDir, '-o', outDir], tmpDir);
+			const result = run(['-n', '--dp', projectDir, '-o', outDir], tmpDir);
 
 			assert.equal(result.status, 0);
 			assert.ok(outputExistsIn(outDir));
@@ -76,7 +62,7 @@ describe('non-interactive CLI flags', () => {
 		});
 
 		it('fails with "Directory not found" and writes nothing when the -o folder does not exist', () => {
-			const result = runCli(['-n', '-o', missingDir]);
+			const result = run(['-n', '-o', missingDir]);
 
 			assert.equal(result.status, 1);
 			assert.match(result.stderr, /Directory not found/);
@@ -84,7 +70,7 @@ describe('non-interactive CLI flags', () => {
 		});
 
 		it('fails with "Directory not found" when the --dp folder does not exist', () => {
-			const result = runCli(['-n', '--dp', missingDir]);
+			const result = run(['-n', '--dp', missingDir]);
 
 			assert.equal(result.status, 1);
 			assert.match(result.stderr, /Directory not found/);
@@ -93,14 +79,14 @@ describe('non-interactive CLI flags', () => {
 		it('fails with "isn\'t a directory" when --dp points to a file', () => {
 			const filePath = path.join(projectDir, 'a.js');
 
-			const result = runCli(['-n', '--dp', filePath]);
+			const result = run(['-n', '--dp', filePath]);
 
 			assert.equal(result.status, 1);
 			assert.match(result.stderr, /isn't a directory/);
 		});
 
 		it('prints the result and writes no file when -s and -p are passed', () => {
-			const result = runCli(['-n', '-s', '-p']);
+			const result = run(['-n', '-s', '-p']);
 
 			assert.equal(result.status, 0);
 			assert.match(result.stdout, /a\.js/);
@@ -109,7 +95,7 @@ describe('non-interactive CLI flags', () => {
 
 		// The exit code is not asserted: -c needs a system clipboard, which CI machines often lack.
 		it('writes no file when -s -c is passed', () => {
-			const result = runCli(['-n', '-s', '-c']);
+			const result = run(['-n', '-s', '-c']);
 
 			assert.doesNotMatch(result.stderr, /Directory not found/);
 			assert.equal(outputExistsIn(projectDir), false);
@@ -120,7 +106,7 @@ describe('non-interactive CLI flags', () => {
 			const originalConfig = 'ignore = ["custom-folder"]\n';
 			fs.writeFileSync(configPath, originalConfig);
 
-			const result = runCli(['-n', '-C']);
+			const result = run(['-n', '-C']);
 
 			assert.equal(result.status, 0);
 			assert.equal(fs.readFileSync(configPath, 'utf8'), originalConfig);
@@ -129,7 +115,7 @@ describe('non-interactive CLI flags', () => {
 
 	describe('-D / --default', () => {
 		it('uses the defaults and writes the output in the current folder', () => {
-			const result = runCli(['-D']);
+			const result = run(['-D']);
 
 			assert.equal(result.status, 0);
 			assert.ok(outputExistsIn(projectDir));
@@ -141,7 +127,7 @@ describe('non-interactive CLI flags', () => {
 			['-C', ['-C']],
 		]) {
 			it(`rejects ${flagName} even when it is written before -D`, () => {
-				const result = runCli([...extraArgs, '-D']);
+				const result = run([...extraArgs, '-D']);
 
 				assert.equal(result.status, 1);
 				assert.match(result.stderr, /cannot be used with/);
@@ -150,14 +136,14 @@ describe('non-interactive CLI flags', () => {
 		}
 
 		it('still runs as -D and writes the output when -n and -D are both passed', () => {
-			const result = runCli(['-n', '-D']);
+			const result = run(['-n', '-D']);
 
 			assert.equal(result.status, 0);
 			assert.ok(outputExistsIn(projectDir));
 		});
 
 		it('still rejects -o when -n is passed together with -D', () => {
-			const result = runCli(['-n', '-D', '-o', outDir]);
+			const result = run(['-n', '-D', '-o', outDir]);
 
 			assert.equal(result.status, 1);
 			assert.match(result.stderr, /cannot be used with/);
@@ -167,7 +153,7 @@ describe('non-interactive CLI flags', () => {
 	describe('removed -y / --yes flag', () => {
 		for (const flagName of ['-y', '--yes']) {
 			it(`rejects ${flagName} as an unknown option since -D replaced it`, () => {
-				const result = runCli([flagName]);
+				const result = run([flagName]);
 
 				assert.equal(result.status, 1);
 				assert.match(result.stderr, /unknown option/);
