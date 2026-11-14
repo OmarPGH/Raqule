@@ -1,53 +1,35 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { getEncoding } from 'js-tiktoken';
 import { countTokens } from '../../src/utils/tokens.js';
 
-// getEncoding() reloads the whole vocabulary on every call (~400-700ms), so it runs once in `before`.
+// Every successful countTokens() call reloads the whole vocabulary (~400-700ms), so the file makes only two.
 describe('countTokens', () => {
-	const SAMPLE_TEXT = 'Hello, world!';
-	const LONGER_TEXT = 'The quick brown fox jumps over the lazy dog. This sentence is used to test tokenizers.';
+	// cl100k_base counts 37 tokens for this text, so a wrong default encoding fails the exact count.
+	const TEXT = 'Hello, world!\nThe quick brown fox 🦊 jumps over the lazy dog.\nمرحبا بالعالم، هذا اختبار.';
+	const TEXT_TOKEN_COUNT = 25;
 
-	let sampleCountDefault;
-	let sampleCountGroundTruth;
-	let longerCountDefault;
-	let longerCountGroundTruth;
-	let sampleCountExplicitEncoding;
+	let countWithDefaultEncoding;
+	let countWithExplicitEncoding;
 
 	before(() => {
-		const enc = getEncoding('o200k_base');
-
-		sampleCountDefault = countTokens(SAMPLE_TEXT);
-		sampleCountGroundTruth = enc.encode(SAMPLE_TEXT).length;
-
-		longerCountDefault = countTokens(LONGER_TEXT);
-		longerCountGroundTruth = enc.encode(LONGER_TEXT).length;
-
-		sampleCountExplicitEncoding = countTokens(SAMPLE_TEXT, 'o200k_base');
+		countWithDefaultEncoding = countTokens(TEXT);
+		countWithExplicitEncoding = countTokens(TEXT, 'o200k_base');
 	});
 
 	it('returns 0 for an empty string', () => {
 		assert.equal(countTokens(''), 0);
 	});
 
-	it('counts the same tokens as js-tiktoken for a short text', () => {
-		assert.equal(sampleCountDefault, sampleCountGroundTruth);
+	it('counts the exact number of o200k_base tokens of a multi-line text with an emoji and Arabic', () => {
+		assert.equal(countWithDefaultEncoding, TEXT_TOKEN_COUNT);
 	});
 
-	it('counts the same tokens as js-tiktoken for a longer, multi-sentence text', () => {
-		assert.equal(longerCountDefault, longerCountGroundTruth);
-	});
-
-	it('returns a larger count for longer text than for shorter text', () => {
-		assert.ok(longerCountDefault > sampleCountDefault);
-	});
-
-	it('counts the same tokens as js-tiktoken when the encoding name is passed explicitly', () => {
-		assert.equal(sampleCountExplicitEncoding, sampleCountGroundTruth);
+	it('counts the same tokens when o200k_base is passed explicitly as when it is left out', () => {
+		assert.equal(countWithExplicitEncoding, countWithDefaultEncoding);
 	});
 
 	it('throws when the encoding name is unknown', () => {
-		assert.throws(() => countTokens(SAMPLE_TEXT, 'not-a-real-encoding'));
+		assert.throws(() => countTokens(TEXT, 'not-a-real-encoding'));
 	});
 
 	it('throws when given a non-string value', () => {
@@ -55,10 +37,5 @@ describe('countTokens', () => {
 		assert.throws(() => countTokens(null), /expected "string"/);
 		assert.throws(() => countTokens(undefined), /expected "string"/);
 		assert.throws(() => countTokens({}), /expected "string"/);
-	});
-
-	// Pinned value: the comparisons above compute both sides with the same library, so they cannot catch drift.
-	it('counts "Hello, world!" as exactly 4 tokens under o200k_base', () => {
-		assert.equal(sampleCountDefault, 4);
 	});
 });

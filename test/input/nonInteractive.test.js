@@ -30,17 +30,12 @@ describe('non-interactive CLI flags', () => {
 	afterEach(() => removeTempProject(tmpDir));
 
 	describe('-n / --non-interactive', () => {
-		it('uses the defaults and writes the output in the current folder when no other flag is passed', () => {
+		it('uses the defaults, writes the output in the current folder and creates no config file when no other flag is passed', () => {
 			const result = run(['-n']);
 
 			assert.equal(result.status, 0);
 			assert.ok(outputExistsIn(projectDir));
 			assert.match(fs.readFileSync(path.join(projectDir, outputFileName), 'utf8'), /a\.js/);
-		});
-
-		it('does not create a config file when -C/--create-config is not passed', () => {
-			run(['-n']);
-
 			assert.equal(fs.existsSync(path.join(projectDir, configFileName)), false);
 		});
 

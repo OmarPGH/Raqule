@@ -1,4 +1,4 @@
-import { describe, it } from 'node:test';
+import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { runNode } from '../support/runCli.js';
 
@@ -16,15 +16,38 @@ function runReadFlags(args) {
 	return runNode(['--input-type=module', '-e', runnerScript, '--', ...args]);
 }
 
+function useFlagsRun(args) {
+	const run = {};
+
+	before(() => Object.assign(run, runReadFlags(args)));
+
+	return run;
+}
+
+function flagsOf(run) {
+	assert.equal(run.status, 0, run.stderr);
+
+	return JSON.parse(run.stdout);
+}
+
 function flagsFrom(args) {
-	const result = runReadFlags(args);
-
-	assert.equal(result.status, 0, result.stderr);
-
-	return JSON.parse(result.stdout);
+	return flagsOf(runReadFlags(args));
 }
 
 describe('readFlags', () => {
+	// -D conflicts with -C, so it cannot share a run with the other boolean flags.
+	const booleanFlags = [
+		['-a', '--all', 'all'],
+		['-c', '--copy', 'copy'],
+		['-C', '--create-config', 'createConfig'],
+		['-p', '--print', 'print'],
+		['-t', '--tree', 'tree'],
+		['-T', '--tokens', 'tokens'],
+		['-n', '--non-interactive', 'nonInteractive'],
+	];
+	const shortBooleans = useFlagsRun(booleanFlags.map(([shortFlag]) => shortFlag));
+	const longBooleans = useFlagsRun(booleanFlags.map(([, longFlag]) => longFlag));
+
 	describe('defaults', () => {
 		it('sets only an unlimited depth when no flag is passed', () => {
 			assert.deepEqual(flagsFrom([]), { depth: 'Infinity' });
@@ -32,21 +55,20 @@ describe('readFlags', () => {
 	});
 
 	describe('boolean flags', () => {
-		for (const [shortFlag, longFlag, key] of [
-			['-a', '--all', 'all'],
-			['-c', '--copy', 'copy'],
-			['-C', '--create-config', 'createConfig'],
-			['-p', '--print', 'print'],
-			['-t', '--tree', 'tree'],
-			['-T', '--tokens', 'tokens'],
-			['-n', '--non-interactive', 'nonInteractive'],
-			['-D', '--default', 'default'],
-		]) {
+		const shortDefault = useFlagsRun(['-D']);
+		const longDefault = useFlagsRun(['--default']);
+
+		for (const [shortFlag, longFlag, key] of booleanFlags) {
 			it(`sets ${key} to true for ${shortFlag} and ${longFlag}`, () => {
-				assert.equal(flagsFrom([shortFlag])[key], true);
-				assert.equal(flagsFrom([longFlag])[key], true);
+				assert.equal(flagsOf(shortBooleans)[key], true);
+				assert.equal(flagsOf(longBooleans)[key], true);
 			});
 		}
+
+		it('sets default to true for -D and --default', () => {
+			assert.equal(flagsOf(shortDefault).default, true);
+			assert.equal(flagsOf(longDefault).default, true);
+		});
 	});
 
 	describe('depth', () => {
@@ -89,24 +111,32 @@ describe('readFlags', () => {
 	});
 
 	describe('value flags', () => {
-		it('reads the directory path from --dp', () => {
-			assert.equal(flagsFrom(['--dp', './project']).directoryPath, './project');
-		});
-
-		it('reads the output folder from -o', () => {
-			assert.equal(flagsFrom(['-o', './out']).output, './out');
-		});
-
-		for (const [flagName, key] of [
+		const patternFlags = [
 			['-e', 'exclude'],
 			['--ce', 'contentExclude'],
 			['--te', 'treeExclude'],
 			['-i', 'include'],
 			['--ci', 'contentInclude'],
 			['--ti', 'treeInclude'],
-		]) {
+		];
+		const patternsOf = (key) => [`${key}1`, `${key}2`, `${key}3`];
+		const valueFlags = useFlagsRun([
+			'--dp', './project',
+			'-o', './out',
+			...patternFlags.flatMap(([flagName, key]) => [flagName, ...patternsOf(key)]),
+		]);
+
+		it('reads the directory path from --dp', () => {
+			assert.equal(flagsOf(valueFlags).directoryPath, './project');
+		});
+
+		it('reads the output folder from -o', () => {
+			assert.equal(flagsOf(valueFlags).output, './out');
+		});
+
+		for (const [flagName, key] of patternFlags) {
 			it(`collects several patterns after ${flagName} into ${key}`, () => {
-				assert.deepEqual(flagsFrom([flagName, 'one', 'two', 'three'])[key], ['one', 'two', 'three']);
+				assert.deepEqual(flagsOf(valueFlags)[key], patternsOf(key));
 			});
 		}
 	});
@@ -177,10 +207,7 @@ describe('readFlags', () => {
 		});
 
 		it('does not warn about redundancy when -n is used without -D', () => {
-			const result = runReadFlags(['-n']);
-
-			assert.equal(result.status, 0);
-			assert.equal(result.stderr, '');
+			assert.equal(shortBooleans.stderr, '');
 		});
 
 		it('rejects an unknown flag', () => {
@@ -189,4 +216,5 @@ describe('readFlags', () => {
 			assert.equal(result.status, 1);
 			assert.match(result.stderr, /unknown option/);
 		});
-	});});
+	});
+});
