@@ -39,6 +39,7 @@ describe('main', () => {
 		});
 
 		it('prints only the tree without file contents with -t', () => {
+			assert.equal(treeOnly.status, 0);
 			assert.match(treeOnly.stdout, /└── app\.js/);
 			assert.doesNotMatch(treeOnly.stdout, /Content :/);
 		});
@@ -78,6 +79,7 @@ describe('main', () => {
 		const aboveMax = useCliRun(['-D', '--max', '1'], sampleFiles);
 
 		it('prints the estimated total tokens with -T', () => {
+			assert.equal(counted.status, 0);
 			assert.match(counted.stdout, /Estimated Total Tokens: [\d,]+/);
 		});
 
@@ -123,15 +125,18 @@ describe('main', () => {
 		});
 
 		it('includes the default ignored entries with -a', () => {
+			assert.equal(withAll.status, 0);
 			assert.match(withAll.stdout, /node_modules\/lib\/index\.js Content :/);
 		});
 
 		it('leaves out the content of files matched by -e', () => {
+			assert.equal(withExclude.status, 0);
 			assert.doesNotMatch(withExclude.stdout, /README\.md Content :/);
 			assert.match(withExclude.stdout, /src\/app\.js Content :/);
 		});
 
 		it('leaves out files deeper than -d', () => {
+			assert.equal(withDepth.status, 0);
 			assert.match(withDepth.stdout, /README\.md Content :/);
 			assert.doesNotMatch(withDepth.stdout, /src\/app\.js Content :/);
 		});
@@ -143,6 +148,7 @@ describe('main', () => {
 		const withWrongSchema = useCliRun(['-D'], { ...sampleFiles, [configFileName]: 'ignore = "README.md"\n' });
 
 		it('leaves out the entries listed in the ignore list of the config file', () => {
+			assert.equal(withIgnoreList.status, 0);
 			assert.doesNotMatch(withIgnoreList.stdout, /README\.md Content :/);
 			assert.match(withIgnoreList.stdout, /src\/app\.js Content :/);
 		});

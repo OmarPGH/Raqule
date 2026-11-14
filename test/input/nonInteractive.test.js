@@ -89,10 +89,10 @@ describe('non-interactive CLI flags', () => {
 		});
 
 		// The exit code is not asserted: -c needs a system clipboard, which CI machines often lack.
-		it('writes no file when -s -c is passed', () => {
+		it('accepts -s with -c and writes no file', () => {
 			const result = run(['-n', '-s', '-c']);
 
-			assert.doesNotMatch(result.stderr, /Directory not found/);
+			assert.doesNotMatch(result.stderr, /^error: /m);
 			assert.equal(outputExistsIn(projectDir), false);
 		});
 

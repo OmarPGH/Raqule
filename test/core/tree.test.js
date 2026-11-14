@@ -11,6 +11,7 @@ describe('generateTree', () => {
 
 	afterEach(() => removeTempProject(projectDir));
 
+	// fs.readdir returns names in byte order, so the expected trees list siblings in that order.
 	async function treeLinesOf(files, flags = {}, configuration = configurationDefault) {
 		projectDir = createTempProject(files);
 		const tree = await generateTree(projectDir, { ...baseFlags, ...flags }, configuration);
@@ -40,18 +41,13 @@ describe('generateTree', () => {
 		it('marks every entry except the last with the branch pointer', async () => {
 			const lines = await treeLinesOf({ 'a.js': '', 'b.js': '' });
 
-			assert.equal(lines.length, 3);
-			assert.ok(lines[1].startsWith('├── '));
-			assert.ok(lines[2].startsWith('└── '));
+			assert.deepEqual(lines.slice(1), ['├── a.js', '└── b.js']);
 		});
 
 		it('keeps the vertical guide under a folder that is not last and uses blank space under the last one', async () => {
 			const lines = await treeLinesOf({ 'one/a.js': '', 'two/b.js': '' });
 
-			const [underFirstFolder, underLastFolder] = lines.filter((line) => line.endsWith('.js'));
-
-			assert.ok(underFirstFolder.startsWith('│   └── '));
-			assert.ok(underLastFolder.startsWith('    └── '));
+			assert.deepEqual(lines.slice(1), ['├── one/', '│   └── a.js', '└── two/', '    └── b.js']);
 		});
 
 		it('shows an empty folder without any children', async () => {

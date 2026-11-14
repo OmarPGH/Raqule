@@ -17,7 +17,7 @@ function isIgnored(resolver, name) {
 			return ele;
 		}
 	}).join('');
-  	return resolver.isIgnored(exampleName, exampleName) && resolver.isIgnored(`folderOne/folderTwo/${exampleName}`, exampleName);
+	return resolver.isIgnored(exampleName, exampleName) && resolver.isIgnored(`folderOne/folderTwo/${exampleName}`, exampleName);
 }
 
 function checkIsIgnored(resolver, name) {
@@ -59,6 +59,6 @@ function checkGroups(resolver, groups) {
 }
 
 describe('Default ignore system', () => {
-  const resolver = new IgnoreResolver({}, { ignore: [] });
-  checkGroups(resolver, defaultIgnoreList);
+	const resolver = new IgnoreResolver({}, { ignore: [] });
+	checkGroups(resolver, defaultIgnoreList);
 });

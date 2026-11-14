@@ -45,8 +45,11 @@ describe('readFlags', () => {
 		['-T', '--tokens', 'tokens'],
 		['-n', '--non-interactive', 'nonInteractive'],
 	];
-	const shortBooleans = useFlagsRun(booleanFlags.map(([shortFlag]) => shortFlag));
-	const longBooleans = useFlagsRun(booleanFlags.map(([, longFlag]) => longFlag));
+	// Run `bit` passes the flags whose position (1 to 7) has that binary digit set, so every flag
+	// appears in a different combination of the 3 runs and a flag wired to the wrong property shows.
+	const booleanRuns = [0, 1, 2].map((bit) => booleanFlags.filter((_, index) => ((index + 1) >> bit) & 1));
+	const shortBooleanRuns = booleanRuns.map((flagsInRun) => useFlagsRun(flagsInRun.map(([shortFlag]) => shortFlag)));
+	const longBooleanRuns = booleanRuns.map((flagsInRun) => useFlagsRun(flagsInRun.map(([, longFlag]) => longFlag)));
 
 	describe('defaults', () => {
 		it('sets only an unlimited depth when no flag is passed', () => {
@@ -59,15 +62,19 @@ describe('readFlags', () => {
 		const longDefault = useFlagsRun(['--default']);
 
 		for (const [shortFlag, longFlag, key] of booleanFlags) {
-			it(`sets ${key} to true for ${shortFlag} and ${longFlag}`, () => {
-				assert.equal(flagsOf(shortBooleans)[key], true);
-				assert.equal(flagsOf(longBooleans)[key], true);
+			it(`sets ${key} to true only when ${shortFlag} or ${longFlag} is passed`, () => {
+				booleanRuns.forEach((flagsInRun, index) => {
+					const expected = flagsInRun.some(([, , runKey]) => runKey === key) || undefined;
+
+					assert.equal(flagsOf(shortBooleanRuns[index])[key], expected);
+					assert.equal(flagsOf(longBooleanRuns[index])[key], expected);
+				});
 			});
 		}
 
-		it('sets default to true for -D and --default', () => {
-			assert.equal(flagsOf(shortDefault).default, true);
-			assert.equal(flagsOf(longDefault).default, true);
+		it('sets only default to true for -D and --default', () => {
+			assert.deepEqual(flagsOf(shortDefault), { depth: 'Infinity', default: true });
+			assert.deepEqual(flagsOf(longDefault), { depth: 'Infinity', default: true });
 		});
 	});
 
@@ -207,7 +214,9 @@ describe('readFlags', () => {
 		});
 
 		it('does not warn about redundancy when -n is used without -D', () => {
-			assert.equal(shortBooleans.stderr, '');
+			for (const run of [...shortBooleanRuns, ...longBooleanRuns]) {
+				assert.equal(run.stderr, '');
+			}
 		});
 
 		it('rejects an unknown flag', () => {
