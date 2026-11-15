@@ -110,15 +110,16 @@ Each ZIP contains the standalone executable and a copy of `README.md`. **Extract
 
 ### 2. Setup & Add to PATH
 
-To run Raqule seamlessly from **any terminal directory** using the shortcut command `rql` (recommended) or `raqule`, follow the steps for your Operating System below:
+To run Raqule seamlessly from **any terminal directory** using the shortcut command `rql` (recommended), follow the steps for your Operating System below. You can rename the file to any other command name you like:
 
 <details>
 <summary><b>🐧 Linux Setup</b></summary>
 
 1. **Make it executable & rename to `rql`:**
    ```bash
-   # Make the file executable
+   # Extract the ZIP
    unzip Raqule-vX.Y.Z-linux-x64-release.zip
+   # Make the file executable
    chmod +x Raqule-vX.Y.Z-linux-x64
    # Rename it for easier use
    mv Raqule-vX.Y.Z-linux-x64 rql
@@ -136,8 +137,9 @@ Now you can run `rql` anywhere! 🎯
 
 1. **Make it executable & rename to `rql`:**
    ```bash
-   # Make the file executable
+   # Extract the ZIP
    unzip Raqule-vX.Y.Z-macos-arm64-release.zip
+   # Make the file executable
    chmod +x Raqule-vX.Y.Z-macos-arm64
    # Rename it for easier use
    mv Raqule-vX.Y.Z-macos-arm64 rql
@@ -231,7 +233,7 @@ If you pass both `-n` and `-D`, `-D` wins and Raqule prints a warning.
 | Output path | `./` |
 | Create a config file | No (the file is not created) |
 
-> **Note:** `-o` is ignored when `-s`/`--skip-save` is used, because no output file is written in that case.
+> **Note:** `-o` can't be combined with `-s`/`--skip-save`. No output file is written when `-s` is used, so there is nothing to save to the `-o` folder. If you pass both, Raqule prints an error and exits.
 
 ---
 
@@ -253,7 +255,7 @@ If you pass both `-n` and `-D`, `-D` wins and Raqule prints a warning.
 | `--ti, --tree-include <patterns...>` | Same as `--include`, but for the tree only |
 | `-m, --max <number>` | Set the maximum output tokens (whole number, 1 or greater). Implies `-T` (always shows the token count). If the output exceeds this limit, Raqule throws an error and aborts instead of writing/printing anything |
 | `-n, --non-interactive` | Never prompt: use the values passed by flags (`-o`, `--dp`, `-C`) and the defaults for the rest. See [Non-Interactive Mode](#non-interactive-mode) |
-| `-o, --output <path>` | The folder where `raqule-output.md` is saved (skips the output path prompt). Ignored with `-s` |
+| `-o, --output <path>` | The folder where `raqule-output.md` is saved (skips the output path prompt). Can't be combined with `-s` |
 | `-p, --print` | Print the result in the terminal, and also save it to `raqule-output.md` |
 | `-s, --skip-save` | Skip saving `raqule-output.md`. Requires `-p` or `-c` to print or copy the result instead, otherwise Raqule exits with an error |
 | `-t, --tree` | Generate only the project tree, without file contents. Can't be combined with `--ce` or `--ci` |
@@ -329,6 +331,8 @@ ignore = ["docs", "*.test.js", "src/secrets/**"]
 With the config above, every `rql` run in that project will automatically skip the `docs` folder, any `*.test.js` file, and everything inside `src/secrets/`, on top of the default ignore list — no extra flags needed. 🧠
 
 You can still combine it with CLI flags: the config file's ignore list, the default list, and your `-e` flags all merge together, and `-i` can still remove any of them — see [Filtering Files & Folders](#️-filtering-files--folders) above.
+
+> **Note:** If the config file is not valid TOML, or if `ignore` is not a list of strings, Raqule shows an error and stops. Fix the file (or delete it) and run Raqule again.
 
 > **Tip:** Commit `raqule-config.toml` to your repo so teammates get the same ignore rules automatically.
 
@@ -422,13 +426,33 @@ Raqule
 │       ├── directory.js
 │       └── index.js
 └── test/
+    ├── barrels.test.js
+    ├── bin/
+    │   └── cli.test.js
+    ├── config/
+    │   ├── config.test.js
+    │   ├── formatConfigErrors.test.js
+    │   ├── io.test.js
+    │   └── validation.test.js
+    ├── core/
+    │   ├── gather.test.js
+    │   └── tree.test.js
     ├── helpers/
     │   └── specialFiles.test.js
     ├── ignore/
+    │   ├── defaultList.test.js
+    │   ├── patterns.test.js
     │   └── resolver.test.js
     ├── input/
     │   ├── ask.test.js
+    │   ├── flags.test.js
     │   └── nonInteractive.test.js
+    ├── main.test.js
+    ├── shared/
+    │   └── constants.test.js
+    ├── support/
+    │   ├── runCli.js
+    │   └── tempProject.js
     ├── utils/
     │   ├── format.test.js
     │   └── tokens.test.js
@@ -436,9 +460,15 @@ Raqule
         └── directory.test.js
 ```
 
-- **`utils/`** — standalone features (clipboard, tokens).
+- **`config/`** — reads, checks, and writes `raqule-config.toml`.
+- **`core/`** — builds the project tree and gathers the file contents.
+- **`ignore/`** — the default ignore list and the logic that decides what to skip.
+- **`input/`** — CLI flags and interactive prompts.
+- **`validation/`** — input checks, like the directory path.
+- **`utils/`** — standalone features (clipboard, tokens, output formatting).
 - **`helpers/`** — small secondary modules, not a feature on their own.
 - **`shared/`** — cross-cutting values everyone uses but nobody **"owns"** (constants).
+- **`test/`** — tests, in the same layout as `src/`. `test/support/` has helpers used by the tests (running the CLI, making temporary projects).
 
 > **For contributors:** `src/main.js` runs the whole flow as an ordered list of small steps, so adding a new behavior usually means adding one more step rather than editing existing logic.
 
@@ -458,6 +488,19 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) first.
 * If an issue is assigned to you, open a Pull Request within 2 days.
 
 > A Pull Request that doesn't follow these rules is automatically closed/rejected.
+
+### Running the Tests
+
+Tests use Node's built-in test runner, so you don't need any extra test library. Install the dependencies first (`npm ci`), then run:
+
+```bash
+# Run all tests
+npm test
+# Run all tests and show a coverage report
+npm run test:coverage
+```
+
+GitHub Actions also runs `npm test` on every push.
 
 ---
 
