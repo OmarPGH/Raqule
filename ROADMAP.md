@@ -3,7 +3,7 @@
 A glimpse of ongoing work and planned features.
 
 ## 🎯 Next Release
-- [x] Support non-interactive mode.
+- Not Planned Yet
 ---
 
 ## 💡 Future Ideas & Backlog
