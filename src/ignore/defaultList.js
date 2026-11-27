@@ -9,6 +9,7 @@ const defaultIgnoreList = {
 		'yarn.lock',
 		'pnpm-lock.yaml',
 		'bun.lockb',
+    'bun.lock',
 		'.npm',
 		'dist',
 		'build',
