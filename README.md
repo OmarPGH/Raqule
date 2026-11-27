@@ -345,7 +345,7 @@ Unless you pass `-a`, Raqule skips the following names/patterns, grouped by ecos
 | Group | Ignored names/patterns |
 | :--- | :--- |
 | **Version control** | `.git`, `.svn`, `.hg` |
-| **JavaScript / Node** | `node_modules`, `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `bun.lockb`, `.npm`, `dist`, `build`, `coverage`, `.next`, `.nuxt`, `.output`, `.turbo`, `.cache`, `*.tsbuildinfo`, `*.log`, `npm-debug.log*`, `yarn-debug.log*`, `yarn-error.log*` |
+| **JavaScript / Node** | `node_modules`, `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `bun.lockb`, `bun.lock`, `.npm`, `dist`, `build`, `coverage`, `.next`, `.nuxt`, `.output`, `.turbo`, `.cache`, `*.tsbuildinfo`, `*.log`, `npm-debug.log*`, `yarn-debug.log*`, `yarn-error.log*` |
 | **Secrets & credentials** | `.env*` (see note below), `.npmrc`, `.pypirc`, `.netrc` |
 | **Cloud & infra** | `.aws`, `.azure`, `.gcloud`, `.kube`, `.terraform`, `*.tfstate`, `*.tfstate.*` |
 | **Rust** | `target`, `Cargo.lock` |
